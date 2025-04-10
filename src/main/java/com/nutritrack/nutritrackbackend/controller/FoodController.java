@@ -51,7 +51,7 @@ public class FoodController {
             return ResponseEntity.ok(localMatches);
         }
 
-        // Aquí deberás implementar esto más adelante
+        // Implementar en un futuro
         List<FoodResponse> externalMatches = openFoodFactsService.searchExternalFoods(query);
         return ResponseEntity.ok(externalMatches);
     }

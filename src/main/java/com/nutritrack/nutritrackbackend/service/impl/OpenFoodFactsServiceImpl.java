@@ -23,7 +23,7 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
     @Override
     public List<FoodResponse> searchExternalFoods(String query) {
         String apiUrl = "https://world.openfoodfacts.org/cgi/search.pl?search_terms=" +
-                query + "&search_simple=1&action=process&json=1&page_size=50"; // usamos más resultados para filtrar bien
+                query + "&search_simple=1&action=process&json=1&page_size=30";
 
         try {
             OpenFoodFactsResponse response = restTemplate.getForObject(apiUrl, OpenFoodFactsResponse.class);
@@ -46,10 +46,6 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
         final String lowerQuery = query.toLowerCase();
 
         return products.stream()
-                // Filtrar productos con:
-                //    - nombre
-                //    - calorías
-                //    - y que coincidan por nombre o marca
                 .filter(p -> {
                     boolean hasName = p.getProduct_name() != null;
                     boolean hasNutrients = p.getNutriments() != null && p.getNutriments().getCalories() != null;
@@ -65,7 +61,7 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
                     if (name.startsWith(lowerQuery)) return 1;
                     return 2;
                 }))
-                // Limitar para rendimiento
+                // Limitar a 10 para rendimiento
                 .limit(10)
                 .toList();
     }
