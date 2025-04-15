@@ -13,6 +13,11 @@ public interface FoodService {
     List<FoodResponse> getAll();
     Optional<Food> findById(Long id);
     List<FoodResponse> searchByName(String query);
+    FoodResponse importExternalFood(FoodRequest request);
+    List<FoodResponse> searchLocalFoods(String query);
+    List<FoodResponse> searchExternalFoods(String query);
+    List<FoodResponse> searchAllFoods(String query);
+
 
 }
 

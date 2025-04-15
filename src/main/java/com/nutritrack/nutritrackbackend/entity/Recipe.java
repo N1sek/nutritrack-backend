@@ -3,10 +3,10 @@ package com.nutritrack.nutritrackbackend.entity;
 import com.nutritrack.nutritrackbackend.enums.MealType;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-
 
 @Entity
 @Table(name = "recipes")
@@ -31,9 +31,17 @@ public class Recipe {
     @Enumerated(EnumType.STRING)
     private MealType mealType;
 
-    @ManyToOne
+    @Builder.Default
+    private boolean isPublic = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
     private User createdBy;
 
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    // Usuarios que han marcado la receta como favorita
     @ManyToMany
     @JoinTable(
             name = "recipe_favorites",
@@ -42,5 +50,7 @@ public class Recipe {
     )
     private Set<User> favoritedBy = new HashSet<>();
 
-    private LocalDateTime createdAt;
+    // Relacion con alimentos
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RecipeIngredient> ingredients = new HashSet<>();
 }

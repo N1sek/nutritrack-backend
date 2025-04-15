@@ -4,6 +4,7 @@ import com.nutritrack.nutritrackbackend.dto.request.user.UpdateProfileRequest;
 import com.nutritrack.nutritrackbackend.entity.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public interface UserService extends UserDetailsService {
@@ -11,5 +12,10 @@ public interface UserService extends UserDetailsService {
     boolean emailExists(String email);
     User save(User user);
     void updateUserProfile(User user, UpdateProfileRequest request);
+
+    default User getByEmail(String email) {
+        return findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("No se ha encontrado el usuario con el email: " + email));
+    }
 
 }

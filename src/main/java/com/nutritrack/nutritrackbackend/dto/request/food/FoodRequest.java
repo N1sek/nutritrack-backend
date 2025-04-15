@@ -24,6 +24,9 @@ public class FoodRequest {
     private Double protein;
     private Double fat;
     private Double carbs;
+    private Double sugar;
+    private Double salt;
+    private Double saturatedFat;
 
     private Set<Long> allergenIds;
 }

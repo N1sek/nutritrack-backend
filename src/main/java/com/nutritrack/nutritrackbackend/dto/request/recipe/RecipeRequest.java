@@ -1,13 +1,11 @@
 package com.nutritrack.nutritrackbackend.dto.request.recipe;
 
-import com.nutritrack.nutritrackbackend.dto.response.recipe.RecipeIngredientResponse;
 import com.nutritrack.nutritrackbackend.enums.MealType;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.List;
-
 
 @Getter
 @Setter
@@ -21,11 +19,12 @@ public class RecipeRequest {
 
     private String description;
 
-    private String imageUrl;
-
-    @NotNull
     private MealType mealType;
 
-    @NotBlank
-    private List<RecipeIngredientResponse> ingredients; // alimentos y cantidad
+    private String imageUrl;
+
+    private Boolean isPublic;
+
+    @Size(min = 1, message = "La receta debe tener al menos un ingrediente")
+    private List<RecipeIngredientRequest> ingredients;
 }

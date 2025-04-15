@@ -10,9 +10,11 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RecipeIngredientRequest {
+
     @NotNull
     private Long foodId;
 
+    @NotNull
     @DecimalMin(value = "0.0", inclusive = false)
-    private Double quantityInGrams;
+    private Double quantity;
 }

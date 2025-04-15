@@ -51,8 +51,11 @@ public class FoodMapper {
                 .protein(food.getProtein())
                 .fat(food.getFat())
                 .carbs(food.getCarbs())
+                .sugar(food.getSugar())
+                .salt(food.getSalt())
+                .saturatedFat(food.getSaturatedFat())
                 .allergens(allergenDTOs)
-                .createdBy(food.getCreatedBy().getNickname())
+                .createdBy(food.getCreatedBy() != null ? food.getCreatedBy().getNickname() : null)
                 .imported(food.isImported())
                 .build();
 

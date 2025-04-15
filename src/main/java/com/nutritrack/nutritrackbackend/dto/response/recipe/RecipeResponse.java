@@ -4,6 +4,7 @@ import com.nutritrack.nutritrackbackend.dto.response.allergen.AllergenResponse;
 import com.nutritrack.nutritrackbackend.enums.MealType;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +19,9 @@ public class RecipeResponse {
     private String name;
     private String description;
     private String imageUrl;
+
     private MealType mealType;
+    private Boolean isPublic;
 
     private List<RecipeIngredientResponse> ingredients;
 
@@ -26,9 +29,16 @@ public class RecipeResponse {
     private Double protein;
     private Double fat;
     private Double carbs;
+    private Double sugar;
+    private Double salt;
+    private Double saturatedFat;
 
     private Set<AllergenResponse> allergens;
+
     private String createdBy;
     private int favoritesCount;
+    private boolean isFavorited;
+
+    private LocalDateTime createdAt;
 }
 

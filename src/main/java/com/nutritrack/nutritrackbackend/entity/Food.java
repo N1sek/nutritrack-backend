@@ -51,5 +51,8 @@ public class Food {
     private boolean imported = false; // true si viene de OpenFoodFacts
 
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "food", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RecipeIngredient> usedInRecipes = new HashSet<>();
 }
 

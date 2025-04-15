@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface OpenFoodFactsService {
     List<FoodResponse> searchExternalFoods(String query);
+
 }
 

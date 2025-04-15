@@ -1,5 +1,6 @@
 package com.nutritrack.nutritrackbackend.dto.response.recipe;
 
+import com.nutritrack.nutritrackbackend.dto.response.food.FoodResponse;
 import lombok.*;
 
 @Getter
@@ -8,8 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RecipeIngredientResponse {
-    private Long foodId;
-    private String foodName;
-    private Double quantityInGrams;
+    private FoodResponse food;
+    private Double quantity;
 }
-

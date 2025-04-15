@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -44,17 +45,19 @@ public class FoodController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<FoodResponse>> searchFoods(@RequestParam String query) {
-        List<FoodResponse> localMatches = foodService.searchByName(query);
-
-        if (!localMatches.isEmpty()) {
-            return ResponseEntity.ok(localMatches);
-        }
-
-        // Implementar en un futuro
-        List<FoodResponse> externalMatches = openFoodFactsService.searchExternalFoods(query);
-        return ResponseEntity.ok(externalMatches);
+    public ResponseEntity<List<FoodResponse>> search(@RequestParam String query) {
+        List<FoodResponse> result = foodService.searchAllFoods(query);
+        return ResponseEntity.ok(result);
     }
+
+
+
+    @PostMapping("/import")
+    public ResponseEntity<FoodResponse> importExternalFood(@RequestBody @Valid FoodRequest request) {
+        FoodResponse saved = foodService.importExternalFood(request);
+        return ResponseEntity.ok(saved);
+    }
+
 
 }
 

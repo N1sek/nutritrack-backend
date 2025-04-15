@@ -7,11 +7,13 @@ import com.nutritrack.nutritrackbackend.mapper.FoodMapper;
 import com.nutritrack.nutritrackbackend.mapper.OpenFoodFactsMapper;
 import com.nutritrack.nutritrackbackend.service.OpenFoodFactsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Comparator;
 import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +44,8 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
     }
 
 
+
+
     public static List<OpenFoodFactsProduct> filterAndSortProducts(List<OpenFoodFactsProduct> products, String query) {
         final String lowerQuery = query.toLowerCase();
 
@@ -61,8 +65,7 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
                     if (name.startsWith(lowerQuery)) return 1;
                     return 2;
                 }))
-                // Limitar a 10 para rendimiento
-                .limit(10)
+                .limit(6)
                 .toList();
     }
 
