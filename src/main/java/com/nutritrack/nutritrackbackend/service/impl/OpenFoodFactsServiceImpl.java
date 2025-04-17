@@ -65,7 +65,7 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
                     if (name.startsWith(lowerQuery)) return 1;
                     return 2;
                 }))
-                .limit(6)
+                .limit(5)
                 .toList();
     }
 

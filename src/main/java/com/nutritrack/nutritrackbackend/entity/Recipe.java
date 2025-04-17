@@ -31,6 +31,18 @@ public class Recipe {
     @Enumerated(EnumType.STRING)
     private MealType mealType;
 
+    @Column
+    private Double calories;
+
+    @Column
+    private Double protein;
+
+    @Column
+    private Double fat;
+
+    @Column
+    private Double carbs;
+
     @Builder.Default
     private boolean isPublic = true;
 

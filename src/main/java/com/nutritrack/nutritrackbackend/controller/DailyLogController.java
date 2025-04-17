@@ -1,0 +1,53 @@
+package com.nutritrack.nutritrackbackend.controller;
+
+import com.nutritrack.nutritrackbackend.dto.request.dailylog.DailyLogRequest;
+import com.nutritrack.nutritrackbackend.dto.response.dailylog.DailyLogResponse;
+import com.nutritrack.nutritrackbackend.entity.User;
+import com.nutritrack.nutritrackbackend.service.DailyLogService;
+import com.nutritrack.nutritrackbackend.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/v1/daily-log")
+@RequiredArgsConstructor
+public class DailyLogController {
+
+    private final DailyLogService dailyLogService;
+    private final UserService userService;
+
+    @GetMapping
+    public ResponseEntity<DailyLogResponse> getLogByDate(
+            @RequestParam("date") String dateStr,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userService.getByEmail(userDetails.getUsername());
+        LocalDate date = LocalDate.parse(dateStr);
+        return ResponseEntity.ok(dailyLogService.getLogByDate(user, date));
+    }
+
+    @PostMapping
+    public ResponseEntity<DailyLogResponse> saveOrUpdateLog(
+            @RequestBody DailyLogRequest request,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userService.getByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(dailyLogService.addOrUpdateEntries(user, request));
+    }
+    
+    @DeleteMapping("/entry/{id}")
+    public ResponseEntity<Void> deleteEntry(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userService.getByEmail(userDetails.getUsername());
+        dailyLogService.deleteEntry(user, id);
+        return ResponseEntity.noContent().build();
+    }
+}

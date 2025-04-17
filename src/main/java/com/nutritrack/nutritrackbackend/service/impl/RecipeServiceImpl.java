@@ -31,9 +31,21 @@ public class RecipeServiceImpl implements RecipeService {
     public RecipeResponse create(RecipeRequest request, User creator) {
         List<RecipeIngredient> ingredients = new ArrayList<>();
 
+        double totalCalories = 0;
+        double totalProtein = 0;
+        double totalFat = 0;
+        double totalCarbs = 0;
+
         for (var ing : request.getIngredients()) {
             Food food = foodRepository.findById(ing.getFoodId())
                     .orElseThrow(() -> new NoSuchElementException("Food not found: " + ing.getFoodId()));
+
+            double factor = ing.getQuantity() / 100.0;
+
+            if (food.getCalories() != null) totalCalories += food.getCalories() * factor;
+            if (food.getProtein() != null) totalProtein += food.getProtein() * factor;
+            if (food.getFat() != null) totalFat += food.getFat() * factor;
+            if (food.getCarbs() != null) totalCarbs += food.getCarbs() * factor;
 
             RecipeIngredient ingredient = RecipeIngredient.builder()
                     .food(food)
@@ -42,6 +54,7 @@ public class RecipeServiceImpl implements RecipeService {
 
             ingredients.add(ingredient);
         }
+
 
         Recipe recipe = Recipe.builder()
                 .name(request.getName())
@@ -52,7 +65,12 @@ public class RecipeServiceImpl implements RecipeService {
                 .ingredients(new HashSet<>())
                 .createdBy(creator)
                 .createdAt(LocalDateTime.now())
+                .calories(round(totalCalories))
+                .protein(round(totalProtein))
+                .fat(round(totalFat))
+                .carbs(round(totalCarbs))
                 .build();
+
 
         // Relacionar ingredientes con la receta
         for (RecipeIngredient ingredient : ingredients) {
@@ -139,6 +157,11 @@ public class RecipeServiceImpl implements RecipeService {
                 })
                 .sum();
     }
+
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
 
     private Comparator<RecipeResponse> getComparator(String sort) {
         if (sort == null) return Comparator.comparing(RecipeResponse::getName);
