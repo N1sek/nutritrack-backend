@@ -22,5 +22,7 @@ public class UserResponse {
     private Goal goal;
     private ActivityLevel activityLevel;
     private Role role;
-    private Set<String> allergens;
+    private Boolean isActive;
+    private Set<Long> allergenIds;
+
 }

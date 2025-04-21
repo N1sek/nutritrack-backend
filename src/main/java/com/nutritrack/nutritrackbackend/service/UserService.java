@@ -1,9 +1,12 @@
 package com.nutritrack.nutritrackbackend.service;
 
 import com.nutritrack.nutritrackbackend.dto.request.user.UpdateProfileRequest;
+import com.nutritrack.nutritrackbackend.dto.response.user.UserResponse;
 import com.nutritrack.nutritrackbackend.entity.User;
+import com.nutritrack.nutritrackbackend.enums.Role;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -12,6 +15,11 @@ public interface UserService extends UserDetailsService {
     boolean emailExists(String email);
     User save(User user);
     void updateUserProfile(User user, UpdateProfileRequest request);
+    List<UserResponse> getAllUsers();
+    void deleteUserById(Long id);
+    void toggleUserEnabled(Long id);
+    void updateUserRole(Long id, Role newRole);
+
 
     default User getByEmail(String email) {
         return findByEmail(email)

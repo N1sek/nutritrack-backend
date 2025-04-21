@@ -1,8 +1,11 @@
 package com.nutritrack.nutritrackbackend.service.impl;
 
 import com.nutritrack.nutritrackbackend.dto.request.user.UpdateProfileRequest;
+import com.nutritrack.nutritrackbackend.dto.response.user.UserResponse;
 import com.nutritrack.nutritrackbackend.entity.Allergen;
 import com.nutritrack.nutritrackbackend.entity.User;
+import com.nutritrack.nutritrackbackend.enums.Role;
+import com.nutritrack.nutritrackbackend.mapper.UserMapper;
 import com.nutritrack.nutritrackbackend.repository.UserRepository;
 import com.nutritrack.nutritrackbackend.security.UserDetailsAdapter;
 import com.nutritrack.nutritrackbackend.service.AllergenService;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,6 +30,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final AllergenService allergenService;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Override
     public Optional<User> findByEmail(String email) {
@@ -46,8 +51,37 @@ public class UserServiceImpl implements UserService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        if (!user.getIsActive()) {
+            throw new UsernameNotFoundException("Cuenta desactivada");
+        }
+
         return new UserDetailsAdapter(user);
     }
+
+
+    @Override
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(userMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public void deleteUserById(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void toggleUserEnabled(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado"));
+
+        user.setIsActive(!user.getIsActive());
+        userRepository.save(user);
+    }
+
 
     @Override
     @Transactional
@@ -84,6 +118,16 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
     }
+
+    @Override
+    @Transactional
+    public void updateUserRole(Long id, Role newRole) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado"));
+        user.setRole(newRole);
+        userRepository.save(user);
+    }
+
 
 
 
