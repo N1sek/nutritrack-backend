@@ -20,3 +20,14 @@ VALUES
 
 INSERT INTO allergens (id, name) VALUES (1, 'Gluten');
 INSERT INTO allergens (id, name) VALUES (2, 'Lactose');
+INSERT INTO allergens (id, name) VALUES (3, 'Nuts');
+INSERT INTO allergens (id, name) VALUES (4, 'Egg');
+INSERT INTO allergens (id, name) VALUES (5, 'Fish');
+INSERT INTO allergens (id, name) VALUES (6, 'Shellfish');
+INSERT INTO allergens (id, name) VALUES (7, 'Soy');
+INSERT INTO allergens (id, name) VALUES (8, 'Sesame');
+INSERT INTO allergens (id, name) VALUES (9, 'Mustard');
+INSERT INTO allergens (id, name) VALUES (10, 'Celery');
+INSERT INTO allergens (id, name) VALUES (11, 'Sulfites');
+INSERT INTO allergens (id, name) VALUES (12, 'Peanuts');
+
