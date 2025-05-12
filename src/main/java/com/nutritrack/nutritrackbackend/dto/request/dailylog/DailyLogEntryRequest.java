@@ -20,4 +20,6 @@ public class DailyLogEntryRequest {
 
     @NotNull
     private MealType mealType;
+
+    private CustomNutritionDTO customNutrition;
 }

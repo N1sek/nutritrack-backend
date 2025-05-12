@@ -36,5 +36,9 @@ public class DailyLogEntry {
     private Recipe recipe;
 
     private Double quantity;
+
+    @Embedded
+    private CustomNutrition customNutrition;
+
 }
 

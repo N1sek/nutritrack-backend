@@ -8,7 +8,6 @@ import com.nutritrack.nutritrackbackend.mapper.FoodMapper;
 import com.nutritrack.nutritrackbackend.security.UserDetailsAdapter;
 import com.nutritrack.nutritrackbackend.service.AllergenService;
 import com.nutritrack.nutritrackbackend.service.FoodService;
-import com.nutritrack.nutritrackbackend.service.OpenFoodFactsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -27,7 +25,6 @@ public class FoodController {
     private final FoodService foodService;
     private final FoodMapper foodMapper;
     private final AllergenService allergenService;
-    private final OpenFoodFactsService openFoodFactsService;
 
     @PostMapping
     public ResponseEntity<FoodResponse> createFood(
@@ -44,20 +41,24 @@ public class FoodController {
         return ResponseEntity.ok(foodService.getAll());
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<FoodResponse>> search(@RequestParam String query) {
-        List<FoodResponse> result = foodService.searchAllFoods(query);
-        return ResponseEntity.ok(result);
+    @GetMapping("/search/local")
+    public ResponseEntity<List<FoodResponse>> searchLocalFoods(@RequestParam String query) {
+        return ResponseEntity.ok(foodService.searchLocalFoods(query));
     }
 
+    @GetMapping("/search/external")
+    public ResponseEntity<List<FoodResponse>> searchExternalFoods(@RequestParam String query) {
+        return ResponseEntity.ok(foodService.searchExternalFoods(query));
+    }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<FoodResponse>> searchAllFoods(@RequestParam String query) {
+        return ResponseEntity.ok(foodService.searchAllFoods(query));
+    }
 
     @PostMapping("/import")
     public ResponseEntity<FoodResponse> importExternalFood(@RequestBody @Valid FoodRequest request) {
         FoodResponse saved = foodService.importExternalFood(request);
         return ResponseEntity.ok(saved);
     }
-
-
 }
-

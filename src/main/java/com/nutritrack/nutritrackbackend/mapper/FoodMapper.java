@@ -47,18 +47,23 @@ public class FoodMapper {
                 .id(food.getId())
                 .name(food.getName())
                 .imageUrl(food.getImageUrl())
-                .calories(food.getCalories())
-                .protein(food.getProtein())
-                .fat(food.getFat())
-                .carbs(food.getCarbs())
-                .sugar(food.getSugar())
-                .salt(food.getSalt())
-                .saturatedFat(food.getSaturatedFat())
+                .calories(round(food.getCalories()))
+                .protein(round(food.getProtein()))
+                .fat(round(food.getFat()))
+                .carbs(round(food.getCarbs()))
+                .sugar(round(food.getSugar()))
+                .salt(round(food.getSalt()))
+                .saturatedFat(round(food.getSaturatedFat()))
                 .allergens(allergenDTOs)
                 .createdBy(food.getCreatedBy() != null ? food.getCreatedBy().getNickname() : null)
                 .imported(food.isImported())
                 .build();
 
+    }
+
+    private Double round(Double value) {
+        if (value == null) return null;
+        return Math.round(value * 100.0) / 100.0;
     }
 }
 

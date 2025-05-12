@@ -1,5 +1,6 @@
 package com.nutritrack.nutritrackbackend.service.impl;
 
+import com.nutritrack.nutritrackbackend.dto.request.dailylog.CustomNutritionDTO;
 import com.nutritrack.nutritrackbackend.dto.request.dailylog.DailyLogEntryRequest;
 import com.nutritrack.nutritrackbackend.dto.request.dailylog.DailyLogRequest;
 import com.nutritrack.nutritrackbackend.dto.response.dailylog.DailyLogResponse;
@@ -72,10 +73,23 @@ public class DailyLogServiceImpl implements DailyLogService {
                 builder.recipe(recipe);
             }
 
+            if (entryDto.getCustomNutrition() != null) {
+                CustomNutritionDTO dto = entryDto.getCustomNutrition();
+                CustomNutrition custom = CustomNutrition.builder()
+                        .calories(dto.getCalories())
+                        .protein(dto.getProtein())
+                        .fat(dto.getFat())
+                        .carbs(dto.getCarbs())
+                        .sugar(dto.getSugar())
+                        .salt(dto.getSalt())
+                        .saturatedFat(dto.getSaturatedFat())
+                        .build();
+                builder.customNutrition(custom);
+            }
+
             DailyLogEntry entry = builder.build();
             log.getEntries().add(entry);
         }
-
 
         dailyLogRepository.save(log);
         return dailyLogMapper.toResponse(log);
