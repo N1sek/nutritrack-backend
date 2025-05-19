@@ -63,6 +63,7 @@ public class RecipeMapper {
                 .id(recipe.getId())
                 .name(recipe.getName())
                 .description(recipe.getDescription())
+                .instructions(recipe.getInstructions())
                 .imageUrl(recipe.getImageUrl())
                 .mealType(recipe.getMealType())
                 .isPublic(recipe.isPublic())

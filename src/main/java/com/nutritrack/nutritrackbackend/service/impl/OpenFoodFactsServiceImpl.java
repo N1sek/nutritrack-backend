@@ -7,6 +7,9 @@ import com.nutritrack.nutritrackbackend.mapper.FoodMapper;
 import com.nutritrack.nutritrackbackend.mapper.OpenFoodFactsMapper;
 import com.nutritrack.nutritrackbackend.service.OpenFoodFactsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -20,18 +23,29 @@ import java.util.List;
 public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
 
     private final FoodMapper foodMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Override
     public List<FoodResponse> searchExternalFoods(String query) {
         String apiUrl = "https://world.openfoodfacts.org/cgi/search.pl?search_terms=" +
-                query + "&search_simple=1&action=process&json=1&page_size=30";
+                query + "&search_simple=1&action=process&json=1&page_size=20";
 
         try {
-            OpenFoodFactsResponse response = restTemplate.getForObject(apiUrl, OpenFoodFactsResponse.class);
-            if (response == null || response.getProducts() == null) return List.of();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "NutriTrack/1.0");
 
-            List<OpenFoodFactsProduct> filtered = filterAndSortProducts(response.getProducts(), query);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            var response = restTemplate.exchange(
+                    apiUrl,
+                    HttpMethod.GET,
+                    entity,
+                    OpenFoodFactsResponse.class
+            );
+
+            List<OpenFoodFactsProduct> filtered = filterAndSortProducts(
+                    response.getBody() != null ? response.getBody().getProducts() : List.of(), query
+            );
 
             return filtered.stream()
                     .map(OpenFoodFactsMapper::mapToFoodResponse)
@@ -43,9 +57,6 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
         }
     }
 
-
-
-
     public static List<OpenFoodFactsProduct> filterAndSortProducts(List<OpenFoodFactsProduct> products, String query) {
         final String lowerQuery = query.toLowerCase();
 
@@ -55,22 +66,14 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
                     boolean hasNutrients = p.getNutriments() != null && p.getNutriments().getCalories() != null;
                     boolean nameMatches = hasName && p.getProduct_name().toLowerCase().contains(lowerQuery);
                     boolean brandMatches = p.getBrands() != null && p.getBrands().toLowerCase().contains(lowerQuery);
-
                     return hasName && hasNutrients && (nameMatches || brandMatches);
                 })
-                // Ordenar
                 .sorted(Comparator.comparingInt(p -> {
                     String name = p.getProduct_name().toLowerCase();
                     if (name.equals(lowerQuery)) return 0;
                     if (name.startsWith(lowerQuery)) return 1;
                     return 2;
                 }))
-                .limit(10)
                 .toList();
     }
-
-
-
-
 }
-

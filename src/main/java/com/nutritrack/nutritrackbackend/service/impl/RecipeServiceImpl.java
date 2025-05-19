@@ -12,6 +12,10 @@ import com.nutritrack.nutritrackbackend.service.RecipeService;
 import com.nutritrack.nutritrackbackend.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -59,6 +63,7 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe recipe = Recipe.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .instructions(request.getInstructions())
                 .imageUrl(request.getImageUrl())
                 .mealType(request.getMealType())
                 .isPublic(request.getIsPublic())
@@ -84,11 +89,12 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public List<RecipeResponse> getAll(String currentUserNickname) {
-        return recipeRepository.findAll().stream()
-                .map(r -> recipeMapper.toResponse(r, currentUserNickname))
-                .toList();
+    public Page<RecipeResponse> getAll(int page, int size, String currentUserNickname) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return recipeRepository.findAll(pageable)
+                .map(recipe -> recipeMapper.toResponse(recipe, currentUserNickname));
     }
+
 
     @Override
     public Optional<RecipeResponse> getById(Long id, String currentUserNickname) {

@@ -19,6 +19,8 @@ public class RecipeRequest {
 
     private String description;
 
+    private String instructions;
+
     private MealType mealType;
 
     private String imageUrl;

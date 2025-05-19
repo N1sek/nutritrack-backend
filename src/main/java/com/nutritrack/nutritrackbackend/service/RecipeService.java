@@ -4,13 +4,14 @@ import com.nutritrack.nutritrackbackend.dto.request.recipe.RecipeRequest;
 import com.nutritrack.nutritrackbackend.dto.response.recipe.RecipeResponse;
 import com.nutritrack.nutritrackbackend.entity.User;
 import com.nutritrack.nutritrackbackend.enums.MealType;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface RecipeService {
     RecipeResponse create(RecipeRequest request, User creator);
-    List<RecipeResponse> getAll(String currentUserNickname);
+    Page<RecipeResponse> getAll(int page, int size, String currentUserNickname);
     Optional<RecipeResponse> getById(Long id, String currentUserNickname);
     List<RecipeResponse> getFavorites(String currentUserNickname);
     void toggleFavorite(Long recipeId, User user);

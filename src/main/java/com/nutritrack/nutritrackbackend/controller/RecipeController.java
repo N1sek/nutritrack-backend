@@ -7,6 +7,7 @@ import com.nutritrack.nutritrackbackend.enums.MealType;
 import com.nutritrack.nutritrackbackend.service.RecipeService;
 import com.nutritrack.nutritrackbackend.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,12 +35,15 @@ public class RecipeController {
 
     // Obtener todas las recetas (publicas y propias)
     @GetMapping
-    public ResponseEntity<List<RecipeResponse>> getAllRecipes(
+    public ResponseEntity<Page<RecipeResponse>> getAllRecipes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         String nickname = userService.getByEmail(userDetails.getUsername()).getNickname();
-        return ResponseEntity.ok(recipeService.getAll(nickname));
+        return ResponseEntity.ok(recipeService.getAll(page, size, nickname));
     }
+
 
     // Obtener recetas favoritas
     @GetMapping("/favorites")

@@ -26,6 +26,9 @@ public class Recipe {
 
     private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String instructions;
+
     private String imageUrl;
 
     @Enumerated(EnumType.STRING)

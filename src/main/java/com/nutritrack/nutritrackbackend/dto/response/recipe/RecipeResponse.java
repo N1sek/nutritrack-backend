@@ -18,6 +18,7 @@ public class RecipeResponse {
     private Long id;
     private String name;
     private String description;
+    private String instructions;
     private String imageUrl;
 
     private MealType mealType;
