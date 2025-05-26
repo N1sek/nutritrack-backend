@@ -17,7 +17,7 @@ public class RestTemplateConfig {
     @Bean
     public RestTemplate restTemplate() {
         var requestConfig = RequestConfig.custom()
-                .setConnectTimeout(Timeout.ofSeconds(10))
+                .setConnectTimeout(Timeout.ofSeconds(15))
                 .setResponseTimeout(Timeout.ofSeconds(20))
                 .build();
 

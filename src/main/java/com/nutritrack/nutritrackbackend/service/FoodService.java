@@ -15,7 +15,7 @@ public interface FoodService {
     List<FoodResponse> searchByName(String query);
     FoodResponse importExternalFood(FoodRequest request);
     List<FoodResponse> searchLocalFoods(String query);
-    List<FoodResponse> searchExternalFoods(String query);
+    List<FoodResponse> searchExternalFoods(String query, int page, int size);
     List<FoodResponse> searchAllFoods(String query);
 
 

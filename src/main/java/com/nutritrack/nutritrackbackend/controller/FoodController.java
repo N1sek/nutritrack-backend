@@ -47,9 +47,14 @@ public class FoodController {
     }
 
     @GetMapping("/search/external")
-    public ResponseEntity<List<FoodResponse>> searchExternalFoods(@RequestParam String query) {
-        return ResponseEntity.ok(foodService.searchExternalFoods(query));
+    public ResponseEntity<List<FoodResponse>> searchExternalFoods(
+            @RequestParam String query,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(foodService.searchExternalFoods(query, page, size));
     }
+
 
     @GetMapping("/search")
     public ResponseEntity<List<FoodResponse>> searchAllFoods(@RequestParam String query) {

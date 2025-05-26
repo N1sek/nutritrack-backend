@@ -96,18 +96,20 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
-    public List<FoodResponse> searchExternalFoods(String query) {
-        return openFoodFactsService.searchExternalFoods(query).stream()
-                .limit(10)
-                .toList();
+    public List<FoodResponse> searchExternalFoods(String query, int page, int size) {
+        return openFoodFactsService.searchExternalFoods(query, page, size);
     }
+
 
     @Override
     public List<FoodResponse> searchAllFoods(String query) {
         List<FoodResponse> localFoods = searchLocalFoods(query);
 
+        int externalPage = 1;
+        int externalSize = 10;
+
         CompletableFuture<List<FoodResponse>> externalFuture = CompletableFuture.supplyAsync(() ->
-                openFoodFactsService.searchExternalFoods(query).stream().limit(5).toList(), executor
+                openFoodFactsService.searchExternalFoods(query, externalPage, externalSize), executor
         );
 
         try {
@@ -127,9 +129,11 @@ public class FoodServiceImpl implements FoodService {
             return combined;
 
         } catch (Exception e) {
+            System.err.println("Error al obtener alimentos externos: " + e.getMessage());
             return localFoods;
         }
     }
+
 
     private Double round(Double value) {
         if (value == null) return null;

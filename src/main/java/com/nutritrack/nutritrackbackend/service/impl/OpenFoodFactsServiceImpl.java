@@ -26,9 +26,9 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
     private final RestTemplate restTemplate;
 
     @Override
-    public List<FoodResponse> searchExternalFoods(String query) {
-        String apiUrl = "https://world.openfoodfacts.org/cgi/search.pl?search_terms=" +
-                query + "&search_simple=1&action=process&json=1&page_size=20";
+    public List<FoodResponse> searchExternalFoods(String query, int page, int size) {
+        String apiUrl = String.format("https://world.openfoodfacts.org/cgi/search.pl?search_terms=%s&search_simple=1&action=process&json=1&page=%d&page_size=%d",
+                query, page, size);
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -56,6 +56,7 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
             return List.of();
         }
     }
+
 
     public static List<OpenFoodFactsProduct> filterAndSortProducts(List<OpenFoodFactsProduct> products, String query) {
         final String lowerQuery = query.toLowerCase();
