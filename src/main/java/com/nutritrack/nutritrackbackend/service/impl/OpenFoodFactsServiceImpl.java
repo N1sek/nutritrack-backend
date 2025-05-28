@@ -3,20 +3,26 @@ package com.nutritrack.nutritrackbackend.service.impl;
 import com.nutritrack.nutritrackbackend.dto.response.external.openfood.OpenFoodFactsProduct;
 import com.nutritrack.nutritrackbackend.dto.response.external.openfood.OpenFoodFactsResponse;
 import com.nutritrack.nutritrackbackend.dto.response.food.FoodResponse;
-import com.nutritrack.nutritrackbackend.mapper.FoodMapper;
 import com.nutritrack.nutritrackbackend.mapper.OpenFoodFactsMapper;
+import com.nutritrack.nutritrackbackend.mapper.FoodMapper;
 import com.nutritrack.nutritrackbackend.service.OpenFoodFactsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -26,47 +32,99 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
     private final RestTemplate restTemplate;
 
     @Override
+    @Cacheable(
+            value = "externalSearch",
+            key = "#query.toLowerCase() + '_' + #page + '_' + #size",
+            unless = "#result.isEmpty()"
+    )
+    @Retryable(
+            value = RestClientException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000, multiplier = 2)
+    )
     public List<FoodResponse> searchExternalFoods(String query, int page, int size) {
-        String apiUrl = String.format("https://world.openfoodfacts.org/cgi/search.pl?search_terms=%s&search_simple=1&action=process&json=1&page=%d&page_size=%d",
-                query, page, size);
+        List<OpenFoodFactsProduct> accumulated = new ArrayList<>();
+        int apiPage = page;
+        int rawPageSize = size * 2; // pedimos el doble para compensar el filtrado
 
-        try {
+        while (accumulated.size() < size) {
+            String url = String.format(
+                    "https://world.openfoodfacts.org/cgi/search.pl?search_terms=%s&search_simple=1&action=process&json=1&page=%d&page_size=%d",
+                    URLEncoder.encode(query, StandardCharsets.UTF_8),
+                    apiPage,
+                    rawPageSize
+            );
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("User-Agent", "NutriTrack/1.0");
-
+            headers.set("Accept-Encoding", "gzip");
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
             var response = restTemplate.exchange(
-                    apiUrl,
+                    url,
                     HttpMethod.GET,
                     entity,
                     OpenFoodFactsResponse.class
             );
 
-            List<OpenFoodFactsProduct> filtered = filterAndSortProducts(
-                    response.getBody() != null ? response.getBody().getProducts() : List.of(), query
-            );
+            List<OpenFoodFactsProduct> products =
+                    response.getBody() != null
+                            ? response.getBody().getProducts()
+                            : List.of();
 
-            return filtered.stream()
-                    .map(OpenFoodFactsMapper::mapToFoodResponse)
-                    .toList();
+            if (products.isEmpty()) {
+                break;  // no hay más páginas
+            }
 
-        } catch (Exception e) {
-            System.err.println("Error al llamar a OpenFoodFacts: " + e.getMessage());
-            return List.of();
+            // filtrado + ordenación
+            List<OpenFoodFactsProduct> filtered = filterAndSortProducts(products, query);
+
+            // acumulamos hasta size
+            for (OpenFoodFactsProduct p : filtered) {
+                if (accumulated.size() >= size) break;
+                accumulated.add(p);
+            }
+
+            // si tras el filtrado hemos obtenido menos de rawPageSize, no hay más
+            if (filtered.size() < rawPageSize) {
+                break;
+            }
+
+            apiPage++;
         }
+
+        // convertimos sólo los primeros `size`
+        return accumulated.stream()
+                .limit(size)
+                .map(OpenFoodFactsMapper::mapToFoodResponse)
+                .toList();
     }
 
+    @Recover
+    public List<FoodResponse> recover(RestClientException ex, String query, int page, int size) {
+        System.err.println("Recover tras fallo externo: " + ex.getMessage());
+        return List.of();
+    }
 
-    public static List<OpenFoodFactsProduct> filterAndSortProducts(List<OpenFoodFactsProduct> products, String query) {
+    /**
+     * Filtra por nombre/marca y valores nutricionales, y ordena
+     * para que las coincidencias más exactas vayan primero.
+     */
+    public static List<OpenFoodFactsProduct> filterAndSortProducts(
+            List<OpenFoodFactsProduct> products,
+            String query
+    ) {
         final String lowerQuery = query.toLowerCase();
 
         return products.stream()
                 .filter(p -> {
                     boolean hasName = p.getProduct_name() != null;
-                    boolean hasNutrients = p.getNutriments() != null && p.getNutriments().getCalories() != null;
-                    boolean nameMatches = hasName && p.getProduct_name().toLowerCase().contains(lowerQuery);
-                    boolean brandMatches = p.getBrands() != null && p.getBrands().toLowerCase().contains(lowerQuery);
+                    boolean hasNutrients = p.getNutriments() != null
+                            && p.getNutriments().getCalories() != null;
+                    boolean nameMatches = hasName
+                            && p.getProduct_name().toLowerCase().contains(lowerQuery);
+                    boolean brandMatches = p.getBrands() != null
+                            && p.getBrands().toLowerCase().contains(lowerQuery);
                     return hasName && hasNutrients && (nameMatches || brandMatches);
                 })
                 .sorted(Comparator.comparingInt(p -> {
