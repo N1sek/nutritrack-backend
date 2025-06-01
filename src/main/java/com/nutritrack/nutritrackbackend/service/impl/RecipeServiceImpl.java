@@ -12,10 +12,7 @@ import com.nutritrack.nutritrackbackend.service.RecipeService;
 import com.nutritrack.nutritrackbackend.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -34,7 +31,6 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     public RecipeResponse create(RecipeRequest request, User creator) {
         List<RecipeIngredient> ingredients = new ArrayList<>();
-
         double totalCalories = 0;
         double totalProtein = 0;
         double totalFat = 0;
@@ -45,20 +41,17 @@ public class RecipeServiceImpl implements RecipeService {
                     .orElseThrow(() -> new NoSuchElementException("Food not found: " + ing.getFoodId()));
 
             double factor = ing.getQuantity() / 100.0;
-
             if (food.getCalories() != null) totalCalories += food.getCalories() * factor;
-            if (food.getProtein() != null) totalProtein += food.getProtein() * factor;
-            if (food.getFat() != null) totalFat += food.getFat() * factor;
-            if (food.getCarbs() != null) totalCarbs += food.getCarbs() * factor;
+            if (food.getProtein() != null)  totalProtein  += food.getProtein()  * factor;
+            if (food.getFat() != null)      totalFat      += food.getFat()      * factor;
+            if (food.getCarbs() != null)    totalCarbs    += food.getCarbs()    * factor;
 
             RecipeIngredient ingredient = RecipeIngredient.builder()
                     .food(food)
                     .quantity(ing.getQuantity())
                     .build();
-
             ingredients.add(ingredient);
         }
-
 
         Recipe recipe = Recipe.builder()
                 .name(request.getName())
@@ -76,30 +69,58 @@ public class RecipeServiceImpl implements RecipeService {
                 .carbs(round(totalCarbs))
                 .build();
 
-
-        // Relacionar ingredientes con la receta
         for (RecipeIngredient ingredient : ingredients) {
             ingredient.setRecipe(recipe);
         }
-
         recipe.setIngredients(new HashSet<>(ingredients));
-        Recipe saved = recipeRepository.save(recipe);
 
+        Recipe saved = recipeRepository.save(recipe);
         return recipeMapper.toResponse(saved, creator.getNickname());
     }
 
     @Override
     public Page<RecipeResponse> getAll(int page, int size, String currentUserNickname) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return recipeRepository.findAll(pageable)
-                .map(recipe -> recipeMapper.toResponse(recipe, currentUserNickname));
-    }
+        User currentUser = userService.findByNickname(currentUserNickname)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No se ha encontrado el usuario con el nickname: " + currentUserNickname));
 
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Recipe> todas = recipeRepository.findAll(pageable);
+
+        List<Recipe> filtradas = todas.stream()
+                .filter(r -> r.isPublic()
+                        || r.getCreatedBy().getId().equals(currentUser.getId()))
+                .toList();
+
+        List<RecipeResponse> dtoList = filtradas.stream()
+                .map(r -> recipeMapper.toResponse(r, currentUserNickname))
+                .toList();
+
+        return new PageImpl<>(
+                dtoList,
+                pageable,
+                filtradas.size()
+        );
+    }
 
     @Override
     public Optional<RecipeResponse> getById(Long id, String currentUserNickname) {
-        return recipeRepository.findById(id)
-                .map(r -> recipeMapper.toResponse(r, currentUserNickname));
+        Optional<Recipe> optReceta = recipeRepository.findById(id);
+        if (optReceta.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Recipe receta = optReceta.get();
+        User currentUser = userService.findByNickname(currentUserNickname)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No se ha encontrado el usuario con el nickname: " + currentUserNickname));
+
+        if (!receta.isPublic()
+                && !receta.getCreatedBy().getId().equals(currentUser.getId())) {
+            return Optional.empty();
+        }
+
+        return Optional.of(recipeMapper.toResponse(receta, currentUserNickname));
     }
 
     @Override
@@ -122,7 +143,6 @@ public class RecipeServiceImpl implements RecipeService {
         } else {
             recipe.getFavoritedBy().add(user);
         }
-
         recipeRepository.save(recipe);
     }
 
@@ -140,13 +160,15 @@ public class RecipeServiceImpl implements RecipeService {
         String nickname = userService.getByEmail(email).getNickname();
 
         return recipeRepository.findAll().stream()
-                .filter(recipe -> recipe.isPublic() ||
-                        recipe.getCreatedBy().getNickname().equalsIgnoreCase(nickname))
+                // Filtramos visibilidad: solo públicas o propias
+                .filter(recipe -> recipe.isPublic()
+                        || recipe.getCreatedBy().getNickname().equalsIgnoreCase(nickname))
                 .map(recipe -> recipeMapper.toResponse(recipe, nickname))
                 .filter(r -> name == null || r.getName().toLowerCase().contains(name.toLowerCase()))
                 .filter(r -> !favoritesOnly || r.isFavorited())
                 .filter(r -> excludedAllergens == null || excludedAllergens.isEmpty()
-                        || r.getAllergens().stream().map(AllergenResponse::getId).noneMatch(excludedAllergens::contains))
+                        || r.getAllergens().stream().map(AllergenResponse::getId)
+                        .noneMatch(excludedAllergens::contains))
                 .filter(r -> mealType == null || r.getMealType() == mealType)
                 .filter(r -> minCalories == null || r.getCalories() != null && r.getCalories() >= minCalories)
                 .filter(r -> maxCalories == null || r.getCalories() != null && r.getCalories() <= maxCalories)
@@ -154,33 +176,18 @@ public class RecipeServiceImpl implements RecipeService {
                 .toList();
     }
 
-
-    private double calculateCalories(Recipe r) {
-        return r.getIngredients().stream()
-                .mapToDouble(i -> {
-                    Double foodCalories = i.getFood().getCalories();
-                    return foodCalories != null ? foodCalories * i.getQuantity() : 0.0;
-                })
-                .sum();
-    }
-
     private double round(double value) {
         return Math.round(value * 100.0) / 100.0;
     }
 
-
     private Comparator<RecipeResponse> getComparator(String sort) {
         if (sort == null) return Comparator.comparing(RecipeResponse::getName);
-
         return switch (sort.toLowerCase()) {
             case "calories" -> Comparator.comparing(RecipeResponse::getCalories, Comparator.nullsLast(Double::compareTo));
-            case "protein" -> Comparator.comparing(RecipeResponse::getProtein, Comparator.nullsLast(Double::compareTo));
-            case "carbs"   -> Comparator.comparing(RecipeResponse::getCarbs, Comparator.nullsLast(Double::compareTo));
-            case "fat"     -> Comparator.comparing(RecipeResponse::getFat, Comparator.nullsLast(Double::compareTo));
-            default        -> Comparator.comparing(RecipeResponse::getName);
+            case "protein"  -> Comparator.comparing(RecipeResponse::getProtein, Comparator.nullsLast(Double::compareTo));
+            case "carbs"    -> Comparator.comparing(RecipeResponse::getCarbs, Comparator.nullsLast(Double::compareTo));
+            case "fat"      -> Comparator.comparing(RecipeResponse::getFat, Comparator.nullsLast(Double::compareTo));
+            default         -> Comparator.comparing(RecipeResponse::getName);
         };
     }
-
-
-
 }

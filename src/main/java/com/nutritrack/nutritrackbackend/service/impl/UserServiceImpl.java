@@ -59,6 +59,11 @@ public class UserServiceImpl implements UserService {
         return new UserDetailsAdapter(user);
     }
 
+    @Override
+    public Optional<User> findByNickname(String nickname) {
+        return userRepository.findByNickname(nickname);
+    }
+
 
     @Override
     public List<UserResponse> getAllUsers() {

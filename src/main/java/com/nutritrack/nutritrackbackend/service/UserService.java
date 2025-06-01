@@ -19,7 +19,7 @@ public interface UserService extends UserDetailsService {
     void deleteUserById(Long id);
     void toggleUserEnabled(Long id);
     void updateUserRole(Long id, Role newRole);
-
+    Optional<User> findByNickname(String nickname);
 
     default User getByEmail(String email) {
         return findByEmail(email)

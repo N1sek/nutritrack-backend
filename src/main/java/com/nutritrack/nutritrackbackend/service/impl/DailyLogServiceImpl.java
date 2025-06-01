@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -105,5 +107,17 @@ public class DailyLogServiceImpl implements DailyLogService {
         }
 
         entryRepository.delete(entry);
+    }
+
+    @Override
+    public List<DailyLogResponse> getLogsInRange(User user, LocalDate start, LocalDate end) {
+        List<DailyLogResponse> result = new ArrayList<>();
+        LocalDate cursor = start;
+        while (!cursor.isAfter(end)) {
+            DailyLogResponse dto = getLogByDate(user, cursor);
+            result.add(dto);
+            cursor = cursor.plusDays(1);
+        }
+        return result;
     }
 }

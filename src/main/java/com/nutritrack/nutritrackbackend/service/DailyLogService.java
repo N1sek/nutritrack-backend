@@ -6,13 +6,14 @@ import com.nutritrack.nutritrackbackend.dto.response.dailylog.DailyLogResponse;
 import com.nutritrack.nutritrackbackend.entity.User;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface DailyLogService {
 
     DailyLogResponse getLogByDate(User user, LocalDate date);
 
     DailyLogResponse addOrUpdateEntries(User user, DailyLogRequest request);
-
+    List<DailyLogResponse> getLogsInRange(User user, LocalDate start, LocalDate end);
 
     void deleteEntry(User user, Long entryId);
 }

@@ -1,3 +1,5 @@
+// src/main/java/com/nutritrack/nutritrackbackend/controller/DailyLogController.java
+
 package com.nutritrack.nutritrackbackend.controller;
 
 import com.nutritrack.nutritrackbackend.dto.request.dailylog.DailyLogRequest;
@@ -12,7 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/daily-log")
@@ -40,7 +42,7 @@ public class DailyLogController {
         User user = userService.getByEmail(userDetails.getUsername());
         return ResponseEntity.ok(dailyLogService.addOrUpdateEntries(user, request));
     }
-    
+
     @DeleteMapping("/entry/{id}")
     public ResponseEntity<Void> deleteEntry(
             @PathVariable Long id,
@@ -49,5 +51,18 @@ public class DailyLogController {
         User user = userService.getByEmail(userDetails.getUsername());
         dailyLogService.deleteEntry(user, id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/range")
+    public ResponseEntity<List<DailyLogResponse>> getLogsInRange(
+            @RequestParam("start") String startDateStr,
+            @RequestParam("end")   String endDateStr,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userService.getByEmail(userDetails.getUsername());
+        LocalDate start = LocalDate.parse(startDateStr);
+        LocalDate end   = LocalDate.parse(endDateStr);
+        List<DailyLogResponse> lista = dailyLogService.getLogsInRange(user, start, end);
+        return ResponseEntity.ok(lista);
     }
 }
