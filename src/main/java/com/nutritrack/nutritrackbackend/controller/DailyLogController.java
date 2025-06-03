@@ -1,5 +1,3 @@
-// src/main/java/com/nutritrack/nutritrackbackend/controller/DailyLogController.java
-
 package com.nutritrack.nutritrackbackend.controller;
 
 import com.nutritrack.nutritrackbackend.dto.request.dailylog.DailyLogRequest;
@@ -63,6 +61,19 @@ public class DailyLogController {
         LocalDate start = LocalDate.parse(startDateStr);
         LocalDate end   = LocalDate.parse(endDateStr);
         List<DailyLogResponse> lista = dailyLogService.getLogsInRange(user, start, end);
+        return ResponseEntity.ok(lista);
+    }
+
+    @GetMapping("/existing-range")
+    public ResponseEntity<List<DailyLogResponse>> getExistingLogsInRange(
+            @RequestParam("start") String startDateStr,
+            @RequestParam("end")   String endDateStr,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userService.getByEmail(userDetails.getUsername());
+        LocalDate start = LocalDate.parse(startDateStr);
+        LocalDate end   = LocalDate.parse(endDateStr);
+        List<DailyLogResponse> lista = dailyLogService.getExistingLogsInRange(user, start, end);
         return ResponseEntity.ok(lista);
     }
 }

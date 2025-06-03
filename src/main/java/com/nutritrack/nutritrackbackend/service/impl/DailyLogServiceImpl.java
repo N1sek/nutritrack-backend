@@ -16,10 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +28,14 @@ public class DailyLogServiceImpl implements DailyLogService {
     private final FoodRepository foodRepository;
     private final RecipeRepository recipeRepository;
     private final DailyLogMapper dailyLogMapper;
+
+    @Override
+    public List<DailyLogResponse> getExistingLogsInRange(User user, LocalDate start, LocalDate end) {
+        return dailyLogRepository.findAllByUserAndDateBetween(user, start, end)
+                .stream()
+                .map(dailyLogMapper::toResponse)
+                .collect(Collectors.toList());
+    }
 
     @Override
     public DailyLogResponse getLogByDate(User user, LocalDate date) {
