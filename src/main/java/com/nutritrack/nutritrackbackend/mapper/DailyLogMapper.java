@@ -129,6 +129,7 @@ public class DailyLogMapper {
                                 .map(this::roundBreakdown)
                                 .toList()
                 )
+                .fastingHours(log.getFastingHours())
                 .build();
     }
 

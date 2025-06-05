@@ -18,4 +18,6 @@ public class DailyLogRequest {
 
     @NotNull
     private List<DailyLogEntryRequest> entries;
+
+    private Integer fastingHours;
 }

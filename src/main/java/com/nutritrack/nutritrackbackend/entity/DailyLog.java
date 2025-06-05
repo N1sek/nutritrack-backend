@@ -30,4 +30,7 @@ public class DailyLog {
 
     @OneToMany(mappedBy = "dailyLog", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<DailyLogEntry> entries = new HashSet<>();
+
+    @Column(name = "fasting_hours")
+    private Integer fastingHours;
 }

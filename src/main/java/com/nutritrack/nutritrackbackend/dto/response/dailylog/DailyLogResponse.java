@@ -25,4 +25,6 @@ public class DailyLogResponse {
     private Double totalSaturatedFat;
 
     private List<DailyLogMealBreakdownResponse> breakdownByMealType;
+
+    private Integer fastingHours;
 }

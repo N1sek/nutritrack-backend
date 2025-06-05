@@ -56,52 +56,57 @@ public class DailyLogServiceImpl implements DailyLogService {
     public DailyLogResponse addOrUpdateEntries(User user, DailyLogRequest request) {
         DailyLog log = dailyLogRepository.findByUserAndDate(user, request.getDate())
                 .orElseGet(() -> {
-                    DailyLog newLog = new DailyLog();
-                    newLog.setUser(user);
-                    newLog.setDate(request.getDate());
-                    newLog.setEntries(new HashSet<>());
-                    return dailyLogRepository.save(newLog);
+                    DailyLog nuevo = new DailyLog();
+                    nuevo.setUser(user);
+                    nuevo.setDate(request.getDate());
+                    nuevo.setEntries(new HashSet<>());
+                    return dailyLogRepository.save(nuevo);
                 });
 
-        for (DailyLogEntryRequest entryDto : request.getEntries()) {
+        if (request.getFastingHours() != null) {
+            log.setFastingHours(request.getFastingHours());
+        }
+
+        for (DailyLogEntryRequest dto : request.getEntries()) {
             DailyLogEntry.DailyLogEntryBuilder builder = DailyLogEntry.builder()
                     .dailyLog(log)
-                    .quantity(entryDto.getQuantity())
-                    .mealType(entryDto.getMealType());
+                    .quantity(dto.getQuantity())
+                    .mealType(dto.getMealType());
 
-            if (entryDto.getFoodId() != null) {
-                Food food = foodRepository.findById(entryDto.getFoodId())
-                        .orElseThrow(() -> new NoSuchElementException("Alimento no encontrado: " + entryDto.getFoodId()));
-                builder.food(food);
+            if (dto.getFoodId() != null) {
+                Food f = foodRepository.findById(dto.getFoodId())
+                        .orElseThrow(() -> new NoSuchElementException("Alimento no encontrado: " + dto.getFoodId()));
+                builder.food(f);
             }
-
-            if (entryDto.getRecipeId() != null) {
-                Recipe recipe = recipeRepository.findById(entryDto.getRecipeId())
-                        .orElseThrow(() -> new NoSuchElementException("Receta no encontrada: " + entryDto.getRecipeId()));
-                builder.recipe(recipe);
+            if (dto.getRecipeId() != null) {
+                Recipe r = recipeRepository.findById(dto.getRecipeId())
+                        .orElseThrow(() -> new NoSuchElementException("Receta no encontrada: " + dto.getRecipeId()));
+                builder.recipe(r);
             }
-
-            if (entryDto.getCustomNutrition() != null) {
-                CustomNutritionDTO dto = entryDto.getCustomNutrition();
+            if (dto.getCustomNutrition() != null) {
+                CustomNutritionDTO cn = dto.getCustomNutrition();
                 CustomNutrition custom = CustomNutrition.builder()
-                        .calories(dto.getCalories())
-                        .protein(dto.getProtein())
-                        .fat(dto.getFat())
-                        .carbs(dto.getCarbs())
-                        .sugar(dto.getSugar())
-                        .salt(dto.getSalt())
-                        .saturatedFat(dto.getSaturatedFat())
+                        .calories(cn.getCalories())
+                        .protein(cn.getProtein())
+                        .fat(cn.getFat())
+                        .carbs(cn.getCarbs())
+                        .sugar(cn.getSugar())
+                        .salt(cn.getSalt())
+                        .saturatedFat(cn.getSaturatedFat())
                         .build();
                 builder.customNutrition(custom);
             }
 
-            DailyLogEntry entry = builder.build();
-            log.getEntries().add(entry);
+            DailyLogEntry nuevaEntrada = builder.build();
+            log.getEntries().add(nuevaEntrada);
         }
 
-        dailyLogRepository.save(log);
-        return dailyLogMapper.toResponse(log);
+        DailyLog guardado = dailyLogRepository.save(log);
+
+        return dailyLogMapper.toResponse(guardado);
     }
+
+
 
     @Override
     public void deleteEntry(User user, Long entryId) {
