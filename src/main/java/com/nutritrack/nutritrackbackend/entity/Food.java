@@ -36,6 +36,10 @@ public class Food {
     private Double salt;
     private Double saturatedFat;
 
+    @OneToMany(mappedBy = "food",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true)
+    private Set<DailyLogEntry> dailyLogEntries = new HashSet<>();
 
     @ManyToMany
     @JoinTable(

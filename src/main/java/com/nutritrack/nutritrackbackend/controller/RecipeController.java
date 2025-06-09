@@ -1,9 +1,11 @@
 package com.nutritrack.nutritrackbackend.controller;
 
 import com.nutritrack.nutritrackbackend.dto.request.recipe.RecipeRequest;
+import com.nutritrack.nutritrackbackend.dto.response.image.UploadImageResponse;
 import com.nutritrack.nutritrackbackend.dto.response.recipe.RecipeResponse;
 import com.nutritrack.nutritrackbackend.entity.User;
 import com.nutritrack.nutritrackbackend.enums.MealType;
+import com.nutritrack.nutritrackbackend.service.ImageStorageService;
 import com.nutritrack.nutritrackbackend.service.RecipeService;
 import com.nutritrack.nutritrackbackend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/recipes")
@@ -22,6 +29,7 @@ public class RecipeController {
 
     private final RecipeService recipeService;
     private final UserService userService;
+    private final ImageStorageService imageStorageService;
 
     @PostMapping
     public ResponseEntity<RecipeResponse> createRecipe(
@@ -100,4 +108,11 @@ public class RecipeController {
         return ResponseEntity.ok(results);
     }
 
+    @PostMapping("/upload")
+    public ResponseEntity<UploadImageResponse> uploadImage(
+            @RequestParam("image") MultipartFile image
+    ) {
+        String url = imageStorageService.store(image);
+        return ResponseEntity.ok(new UploadImageResponse(url));
+    }
 }

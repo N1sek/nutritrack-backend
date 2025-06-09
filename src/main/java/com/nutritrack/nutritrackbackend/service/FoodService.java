@@ -18,6 +18,11 @@ public interface FoodService {
     List<FoodResponse> searchExternalFoods(String query, int page, int size);
     List<FoodResponse> searchAllFoods(String query);
 
+    List<FoodResponse> getAllFoods();
+    FoodResponse getFoodById(Long id);
+    FoodResponse createFood(FoodRequest request);
+    FoodResponse updateFood(Long id, FoodRequest request);
+    void deleteFood(Long id);
 
 }
 

@@ -10,8 +10,12 @@ import com.nutritrack.nutritrackbackend.repository.FoodRepository;
 import com.nutritrack.nutritrackbackend.service.AllergenService;
 import com.nutritrack.nutritrackbackend.service.FoodService;
 import com.nutritrack.nutritrackbackend.service.OpenFoodFactsService;
+import com.nutritrack.nutritrackbackend.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -27,6 +31,7 @@ public class FoodServiceImpl implements FoodService {
     private final OpenFoodFactsService openFoodFactsService;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final UserService userService;
 
     @Override
     public Food create(FoodRequest request, User creator) {
@@ -132,6 +137,64 @@ public class FoodServiceImpl implements FoodService {
             System.err.println("Error al obtener alimentos externos: " + e.getMessage());
             return localFoods;
         }
+    }
+
+    @Override
+    public List<FoodResponse> getAllFoods() {
+        return foodRepository.findAll().stream()
+                .map(foodMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public FoodResponse getFoodById(Long id) {
+        Food food = foodRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Alimento no encontrado: " + id));
+        return foodMapper.toResponse(food);
+    }
+
+    @Override
+    @Transactional
+    public FoodResponse createFood(FoodRequest request) {
+        User creator = getCurrentUser();
+        Set<Allergen> allergens = loadAllergens(request.getAllergenIds());
+        Food toSave = foodMapper.toEntity(request, allergens, creator);
+        Food saved = foodRepository.save(toSave);
+        return foodMapper.toResponse(saved);
+    }
+
+
+    @Override
+    @Transactional
+    public FoodResponse updateFood(Long id, FoodRequest request) {
+        Food existing = foodRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Alimento no encontrado: " + id));
+        Set<Allergen> allergens = loadAllergens(request.getAllergenIds());
+        foodMapper.updateEntityFromRequest(request, allergens, existing);
+        Food updated = foodRepository.save(existing);
+        return foodMapper.toResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteFood(Long id) {
+        Food existing = foodRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Alimento no encontrado: " + id));
+        foodRepository.delete(existing);
+    }
+
+    private Set<Allergen> loadAllergens(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptySet();
+        }
+        List<Long> idList = new ArrayList<>(ids);
+        return new HashSet<>(allergenService.findAllByIds(idList));
+    }
+
+
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return userService.getByEmail(auth.getName());
     }
 
 
