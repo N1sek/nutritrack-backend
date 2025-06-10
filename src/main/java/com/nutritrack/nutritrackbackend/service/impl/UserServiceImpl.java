@@ -9,6 +9,7 @@ import com.nutritrack.nutritrackbackend.mapper.UserMapper;
 import com.nutritrack.nutritrackbackend.repository.UserRepository;
 import com.nutritrack.nutritrackbackend.security.UserDetailsAdapter;
 import com.nutritrack.nutritrackbackend.service.AllergenService;
+import com.nutritrack.nutritrackbackend.service.ImageStorageService;
 import com.nutritrack.nutritrackbackend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,6 +39,7 @@ public class UserServiceImpl implements UserService {
 
     private static final String IMAGE_DIR = "./uploads/images";
     private static final String AVATAR_SUBDIR = "avatars";
+    private final ImageStorageService imageStorageService;
 
 
     @Override
@@ -142,23 +144,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
+    @Override
     public void updateUserAvatar(User user, MultipartFile file) {
-        String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
-        String filename = UUID.randomUUID() + (ext != null ? "." + ext : "");
-        Path avatarsDir = Paths.get(IMAGE_DIR, AVATAR_SUBDIR);
-        Path target = avatarsDir.resolve(filename);
+        String url = imageStorageService.store(file);
 
-        try {
-            Files.createDirectories(avatarsDir);
-            file.transferTo(target.toFile());
-
-            String publicUrl = "/images/" + AVATAR_SUBDIR + "/" + filename;
-            user.setAvatarUrl(publicUrl);
-            userRepository.save(user);
-
-        } catch (IOException e) {
-            throw new UncheckedIOException("Error guardando avatar", e);
-        }
+        user.setAvatarUrl(url);
+        userRepository.save(user);
     }
 
 
