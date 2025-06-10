@@ -16,12 +16,16 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,10 @@ public class UserServiceImpl implements UserService {
     private final AllergenService allergenService;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+
+    private static final String IMAGE_DIR = "./uploads/images";
+    private static final String AVATAR_SUBDIR = "avatars";
+
 
     @Override
     public Optional<User> findByEmail(String email) {
@@ -133,7 +141,25 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Transactional
+    public void updateUserAvatar(User user, MultipartFile file) {
+        String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        String filename = UUID.randomUUID() + (ext != null ? "." + ext : "");
+        Path avatarsDir = Paths.get(IMAGE_DIR, AVATAR_SUBDIR);
+        Path target = avatarsDir.resolve(filename);
 
+        try {
+            Files.createDirectories(avatarsDir);
+            file.transferTo(target.toFile());
+
+            String publicUrl = "/images/" + AVATAR_SUBDIR + "/" + filename;
+            user.setAvatarUrl(publicUrl);
+            userRepository.save(user);
+
+        } catch (IOException e) {
+            throw new UncheckedIOException("Error guardando avatar", e);
+        }
+    }
 
 
 }

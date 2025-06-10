@@ -24,5 +24,5 @@ public class UserResponse {
     private Role role;
     private Boolean isActive;
     private Set<Long> allergenIds;
-
+    private String avatarUrl;
 }

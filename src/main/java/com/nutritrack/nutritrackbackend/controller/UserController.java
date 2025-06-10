@@ -8,9 +8,11 @@ import com.nutritrack.nutritrackbackend.service.UserService;
 import com.nutritrack.nutritrackbackend.mapper.UserMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -19,6 +21,7 @@ public class UserController {
 
     private final UserService userService;
     private final UserMapper userMapper;
+
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
@@ -34,6 +37,16 @@ public class UserController {
     ) {
         User user = ((UserDetailsAdapter) authentication.getPrincipal()).getUser();
         userService.updateUserProfile(user, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> uploadAvatar(
+            Authentication authentication,
+            @RequestPart("file") MultipartFile file
+    ) {
+        User user = ((UserDetailsAdapter) authentication.getPrincipal()).getUser();
+        userService.updateUserAvatar(user, file);
         return ResponseEntity.noContent().build();
     }
 }

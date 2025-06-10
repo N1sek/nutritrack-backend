@@ -28,6 +28,7 @@ public class UserMapper {
                 .allergenIds(user.getAllergens().stream()
                         .map(Allergen::getId)
                         .collect(Collectors.toSet()))
+                .avatarUrl(user.getAvatarUrl())
 
                 .build();
     }

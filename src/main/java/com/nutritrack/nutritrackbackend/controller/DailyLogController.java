@@ -6,11 +6,15 @@ import com.nutritrack.nutritrackbackend.entity.User;
 import com.nutritrack.nutritrackbackend.service.DailyLogService;
 import com.nutritrack.nutritrackbackend.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -75,5 +79,37 @@ public class DailyLogController {
         LocalDate end   = LocalDate.parse(endDateStr);
         List<DailyLogResponse> lista = dailyLogService.getExistingLogsInRange(user, start, end);
         return ResponseEntity.ok(lista);
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<ByteArrayResource> exportLogs(
+            @RequestParam("start") String startDateStr,
+            @RequestParam("end")   String endDateStr,
+            @RequestParam("format") String format,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) throws IOException {
+        User user = userService.getByEmail(userDetails.getUsername());
+        LocalDate start = LocalDate.parse(startDateStr);
+        LocalDate end   = LocalDate.parse(endDateStr);
+
+        byte[] data = dailyLogService.exportLogs(user, start, end, format);
+
+        String ext, mediaType;
+        switch (format.toLowerCase()) {
+            case "csv"   -> { ext = "csv"; mediaType = "text/csv"; }
+            case "excel" -> { ext = "xlsx"; mediaType =
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"; }
+            case "pdf"   -> { ext = "pdf"; mediaType = "application/pdf"; }
+            default      -> throw new IllegalArgumentException("Formato no soportado");
+        }
+
+        String filename = String.format("informe_%s_a_%s.%s", start, end, ext);
+        var resource = new ByteArrayResource(data);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType(mediaType))
+                .contentLength(data.length)
+                .body(resource);
     }
 }

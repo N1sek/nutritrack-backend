@@ -5,6 +5,7 @@ import com.nutritrack.nutritrackbackend.dto.response.user.UserResponse;
 import com.nutritrack.nutritrackbackend.entity.User;
 import com.nutritrack.nutritrackbackend.enums.Role;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -20,6 +21,7 @@ public interface UserService extends UserDetailsService {
     void toggleUserEnabled(Long id);
     void updateUserRole(Long id, Role newRole);
     Optional<User> findByNickname(String nickname);
+    void updateUserAvatar(User user, MultipartFile file);
 
     default User getByEmail(String email) {
         return findByEmail(email)

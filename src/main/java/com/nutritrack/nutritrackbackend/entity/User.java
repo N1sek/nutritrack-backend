@@ -79,6 +79,8 @@ public class User {
 
     private LocalDateTime lastNicknameChange;
 
+    private String avatarUrl;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_allergen",
