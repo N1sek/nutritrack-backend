@@ -1,6 +1,5 @@
 package com.nutritrack.nutritrackbackend.mapper;
 
-import com.nutritrack.nutritrackbackend.dto.request.dailylog.CustomNutritionDTO;
 import com.nutritrack.nutritrackbackend.dto.response.dailylog.DailyLogEntryResponse;
 import com.nutritrack.nutritrackbackend.dto.response.dailylog.DailyLogMealBreakdownResponse;
 import com.nutritrack.nutritrackbackend.dto.response.dailylog.DailyLogResponse;
@@ -25,151 +24,41 @@ public class DailyLogMapper {
     private final RecipeMapper recipeMapper;
 
     public DailyLogResponse toResponse(DailyLog log) {
-        List<DailyLogEntryResponse> entryResponses = log.getEntries().stream()
+        List<DailyLogEntryResponse> entries = log.getEntries().stream()
                 .map(this::mapEntry)
                 .toList();
+        
+        double totalC = 0, totalP = 0, totalF = 0, totalCarb = 0, totalSug = 0, totalSalt = 0, totalSat = 0;
+        Map<MealType, DailyLogMealBreakdownResponse> breakdown = new HashMap<>();
 
-        double totalCalories      = 0.0;
-        double totalProtein       = 0.0;
-        double totalFat           = 0.0;
-        double totalCarbs         = 0.0;
-        double totalSugar         = 0.0;
-        double totalSalt          = 0.0;
-        double totalSaturatedFat  = 0.0;
+        for (DailyLogEntry e : log.getEntries()) {
+            DailyLogEntryResponse dto = mapEntry(e);
+            MealType mt = e.getMealType();
+            breakdown.putIfAbsent(mt, DailyLogMealBreakdownResponse.builder().mealType(mt).build());
+            DailyLogMealBreakdownResponse b = breakdown.get(mt);
 
-        Map<MealType, DailyLogMealBreakdownResponse> breakdownMap = new HashMap<>();
-
-        for (DailyLogEntry entry : log.getEntries()) {
-            CustomNutrition cn = entry.getCustomNutrition();
-            double factor = entry.getQuantity() / 100.0;
-            MealType mt = entry.getMealType();
-
-            breakdownMap.putIfAbsent(mt, DailyLogMealBreakdownResponse.builder()
-                    .mealType(mt)
-                    .build());
-            DailyLogMealBreakdownResponse br = breakdownMap.get(mt);
-
-            if (cn != null) {
-                if (cn.getCalories() != null) {
-                    double v = cn.getCalories();
-                    totalCalories     += v;
-                    br.setTotalCalories(br.getTotalCalories() + v);
-                }
-                if (cn.getProtein() != null) {
-                    double v = cn.getProtein();
-                    totalProtein      += v;
-                    br.setTotalProtein(br.getTotalProtein() + v);
-                }
-                if (cn.getFat() != null) {
-                    double v = cn.getFat();
-                    totalFat          += v;
-                    br.setTotalFat(br.getTotalFat() + v);
-                }
-                if (cn.getCarbs() != null) {
-                    double v = cn.getCarbs();
-                    totalCarbs        += v;
-                    br.setTotalCarbs(br.getTotalCarbs() + v);
-                }
-                if (cn.getSugar() != null) {
-                    double v = cn.getSugar();
-                    totalSugar        += v;
-                    br.setTotalSugar(br.getTotalSugar() + v);
-                }
-                if (cn.getSalt() != null) {
-                    double v = cn.getSalt();
-                    totalSalt         += v;
-                    br.setTotalSalt(br.getTotalSalt() + v);
-                }
-                if (cn.getSaturatedFat() != null) {
-                    double v = cn.getSaturatedFat();
-                    totalSaturatedFat += v;
-                    br.setTotalSaturatedFat(br.getTotalSaturatedFat() + v);
-                }
-                continue;
-            }
-
-            // Si no hay customNutrition, map por food/recipe original
-            if (entry.getFood() != null) {
-                FoodResponse f = foodMapper.toResponse(entry.getFood());
-                if (f.getCalories() != null) {
-                    double v = f.getCalories() * factor;
-                    totalCalories     += v;
-                    br.setTotalCalories(br.getTotalCalories() + v);
-                }
-                if (f.getProtein() != null) {
-                    double v = f.getProtein() * factor;
-                    totalProtein      += v;
-                    br.setTotalProtein(br.getTotalProtein() + v);
-                }
-                if (f.getFat() != null) {
-                    double v = f.getFat() * factor;
-                    totalFat          += v;
-                    br.setTotalFat(br.getTotalFat() + v);
-                }
-                if (f.getCarbs() != null) {
-                    double v = f.getCarbs() * factor;
-                    totalCarbs        += v;
-                    br.setTotalCarbs(br.getTotalCarbs() + v);
-                }
-                if (f.getSugar() != null) {
-                    double v = f.getSugar() * factor;
-                    totalSugar        += v;
-                    br.setTotalSugar(br.getTotalSugar() + v);
-                }
-                if (f.getSalt() != null) {
-                    double v = f.getSalt() * factor;
-                    totalSalt         += v;
-                    br.setTotalSalt(br.getTotalSalt() + v);
-                }
-                if (f.getSaturatedFat() != null) {
-                    double v = f.getSaturatedFat() * factor;
-                    totalSaturatedFat += v;
-                    br.setTotalSaturatedFat(br.getTotalSaturatedFat() + v);
-                }
-            }
-
-            if (entry.getRecipe() != null) {
-                RecipeResponse r = recipeMapper.toResponse(
-                        entry.getRecipe(),
-                        log.getUser().getNickname()
-                );
-                if (r.getCalories() != null) {
-                    double v = r.getCalories() * factor;
-                    totalCalories     += v;
-                    br.setTotalCalories(br.getTotalCalories() + v);
-                }
-                if (r.getProtein() != null) {
-                    double v = r.getProtein() * factor;
-                    totalProtein      += v;
-                    br.setTotalProtein(br.getTotalProtein() + v);
-                }
-                if (r.getFat() != null) {
-                    double v = r.getFat() * factor;
-                    totalFat          += v;
-                    br.setTotalFat(br.getTotalFat() + v);
-                }
-                if (r.getCarbs() != null) {
-                    double v = r.getCarbs() * factor;
-                    totalCarbs        += v;
-                    br.setTotalCarbs(br.getTotalCarbs() + v);
-                }
-
-            }
+            totalC    += dto.getCalories();      b.setTotalCalories(b.getTotalCalories() + dto.getCalories());
+            totalP    += dto.getProtein();       b.setTotalProtein(b.getTotalProtein() + dto.getProtein());
+            totalF    += dto.getFat();           b.setTotalFat(b.getTotalFat() + dto.getFat());
+            totalCarb += dto.getCarbs();         b.setTotalCarbs(b.getTotalCarbs() + dto.getCarbs());
+            totalSug  += dto.getSugar();         b.setTotalSugar(b.getTotalSugar() + dto.getSugar());
+            totalSalt += dto.getSalt();          b.setTotalSalt(b.getTotalSalt() + dto.getSalt());
+            totalSat  += dto.getSaturatedFat();  b.setTotalSaturatedFat(b.getTotalSaturatedFat() + dto.getSaturatedFat());
         }
 
         return DailyLogResponse.builder()
                 .id(log.getId())
                 .date(log.getDate())
-                .entries(entryResponses)
-                .totalCalories(round(totalCalories))
-                .totalProtein(round(totalProtein))
-                .totalFat(round(totalFat))
-                .totalCarbs(round(totalCarbs))
-                .totalSugar(round(totalSugar))
+                .entries(entries)
+                .totalCalories(round(totalC))
+                .totalProtein(round(totalP))
+                .totalFat(round(totalF))
+                .totalCarbs(round(totalCarb))
+                .totalSugar(round(totalSug))
                 .totalSalt(round(totalSalt))
-                .totalSaturatedFat(round(totalSaturatedFat))
+                .totalSaturatedFat(round(totalSat))
                 .breakdownByMealType(
-                        breakdownMap.values().stream()
+                        breakdown.values().stream()
                                 .map(this::roundBreakdown)
                                 .toList()
                 )
@@ -178,43 +67,65 @@ public class DailyLogMapper {
     }
 
     private DailyLogEntryResponse mapEntry(DailyLogEntry entry) {
-        FoodResponse   foodResponse   = null;
-        RecipeResponse recipeResponse = null;
+        FoodResponse   fr = entry.getFood()   != null
+                ? foodMapper.toResponse(entry.getFood())
+                : null;
+        RecipeResponse rr = entry.getRecipe() != null
+                ? recipeMapper.toResponse(entry.getRecipe(), entry.getDailyLog().getUser().getNickname())
+                : null;
 
-        if (entry.getFood() != null) {
-            foodResponse = foodMapper.toResponse(entry.getFood());
-        }
-        if (entry.getRecipe() != null) {
-            recipeResponse = recipeMapper.toResponse(
-                    entry.getRecipe(),
-                    entry.getDailyLog().getUser().getNickname()
-            );
-        }
+        double factor = entry.getQuantity() / 100.0;
 
-        var builder = DailyLogEntryResponse.builder()
-                .id(entry.getId())
-                .food(foodResponse)
-                .recipe(recipeResponse)
-                .quantity(entry.getQuantity())
-                .mealType(entry.getMealType());
-
+        double cals = 0, prot = 0, fats = 0, carbs = 0, sugar = 0, salt = 0, satFat = 0;
         CustomNutrition cn = entry.getCustomNutrition();
+
         if (cn != null) {
-            builder
-                    .calories(     cn.getCalories()       != null ? round(cn.getCalories())       : null)
-                    .protein(      cn.getProtein()        != null ? round(cn.getProtein())        : null)
-                    .fat(          cn.getFat()            != null ? round(cn.getFat())            : null)
-                    .carbs(        cn.getCarbs()          != null ? round(cn.getCarbs())          : null)
-                    .sugar(        cn.getSugar()          != null ? round(cn.getSugar())          : null)
-                    .salt(         cn.getSalt()           != null ? round(cn.getSalt())           : null)
-                    .saturatedFat( cn.getSaturatedFat()   != null ? round(cn.getSaturatedFat())   : null);
+            if (cn.getCalories()      != null) cals   = cn.getCalories();
+            if (cn.getProtein()       != null) prot   = cn.getProtein();
+            if (cn.getFat()           != null) fats   = cn.getFat();
+            if (cn.getCarbs()         != null) carbs  = cn.getCarbs();
+            if (cn.getSugar()         != null) sugar  = cn.getSugar();
+            if (cn.getSalt()          != null) salt   = cn.getSalt();
+            if (cn.getSaturatedFat()  != null) satFat = cn.getSaturatedFat();
+        } else {
+            if (fr != null) {
+                if (fr.getCalories()     != null) cals   = fr.getCalories()     * factor;
+                if (fr.getProtein()      != null) prot   = fr.getProtein()      * factor;
+                if (fr.getFat()          != null) fats   = fr.getFat()          * factor;
+                if (fr.getCarbs()        != null) carbs  = fr.getCarbs()        * factor;
+                if (fr.getSugar()        != null) sugar  = fr.getSugar()        * factor;
+                if (fr.getSalt()         != null) salt   = fr.getSalt()         * factor;
+                if (fr.getSaturatedFat() != null) satFat = fr.getSaturatedFat() * factor;
+            }
+            if (rr != null) {
+                if (rr.getCalories()     != null) cals   += rr.getCalories()     * factor;
+                if (rr.getProtein()      != null) prot   += rr.getProtein()      * factor;
+                if (rr.getFat()          != null) fats   += rr.getFat()          * factor;
+                if (rr.getCarbs()        != null) carbs  += rr.getCarbs()        * factor;
+                if (rr.getSugar()        != null) sugar  += rr.getSugar()        * factor;
+                if (rr.getSalt()         != null) salt   += rr.getSalt()         * factor;
+                if (rr.getSaturatedFat() != null) satFat += rr.getSaturatedFat() * factor;
+            }
         }
 
-        return builder.build();
+        return DailyLogEntryResponse.builder()
+                .id(entry.getId())
+                .food(fr)
+                .recipe(rr)
+                .quantity(entry.getQuantity())
+                .mealType(entry.getMealType())
+                .calories(Math.round(cals   * 100.0) / 100.0)
+                .protein(Math.round(prot   * 100.0) / 100.0)
+                .fat(Math.round(fats   * 100.0) / 100.0)
+                .carbs(Math.round(carbs  * 100.0) / 100.0)
+                .sugar(Math.round(sugar  * 100.0) / 100.0)
+                .salt(Math.round(salt    * 100.0) / 100.0)
+                .saturatedFat(Math.round(satFat * 100.0) / 100.0)
+                .build();
     }
 
-    private double round(double value) {
-        return Math.round(value * 100.0) / 100.0;
+    private double round(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 
     private DailyLogMealBreakdownResponse roundBreakdown(DailyLogMealBreakdownResponse b) {

@@ -7,6 +7,7 @@ import com.nutritrack.nutritrackbackend.mapper.OpenFoodFactsMapper;
 import com.nutritrack.nutritrackbackend.mapper.FoodMapper;
 import com.nutritrack.nutritrackbackend.service.OpenFoodFactsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +32,13 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
     private final FoodMapper foodMapper;
     private final RestTemplate restTemplate;
 
+    @Value("${offfacts.url}")
+    private String offUrl;
+    @Value("${offfacts.username}")
+    private String offUser;
+    @Value("${offfacts.password}")
+    private String offPass;
+
     @Override
     @Cacheable(
             value = "externalSearch",
@@ -49,14 +57,15 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
 
         while (accumulated.size() < size) {
             String url = String.format(
-                    "https://world.openfoodfacts.org/cgi/search.pl?search_terms=%s&search_simple=1&action=process&json=1&page=%d&page_size=%d",
+                    "%s?search_terms=%s&search_simple=1&action=process&json=1&page=%d&page_size=%d",
+                    offUrl,
                     URLEncoder.encode(query, StandardCharsets.UTF_8),
-                    apiPage,
-                    rawPageSize
+                    page,
+                    size*2
             );
 
             HttpHeaders headers = new HttpHeaders();
-            headers.set("User-Agent", "NutriTrack/1.0");
+            headers.set("User-Agent", "NutriTrack/1.0 (https://nutritrack.app; contacto@nutritrack.app)");
             headers.set("Accept-Encoding", "gzip");
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
