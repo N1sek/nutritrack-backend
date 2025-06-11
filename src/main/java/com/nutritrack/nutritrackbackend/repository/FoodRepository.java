@@ -1,6 +1,7 @@
 package com.nutritrack.nutritrackbackend.repository;
 
 import com.nutritrack.nutritrackbackend.entity.Food;
+import com.nutritrack.nutritrackbackend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +18,8 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     List<Food> findByNameContainingIgnoreCase(String name);
 
     Optional<Food> findByNameIgnoreCaseAndImageUrl(String name, String imageUrl);
+
+    List<Food> findAllByCreatedBy(User user);
 
 
 }

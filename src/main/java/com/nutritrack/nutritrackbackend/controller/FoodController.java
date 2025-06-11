@@ -8,11 +8,14 @@ import com.nutritrack.nutritrackbackend.mapper.FoodMapper;
 import com.nutritrack.nutritrackbackend.security.UserDetailsAdapter;
 import com.nutritrack.nutritrackbackend.service.AllergenService;
 import com.nutritrack.nutritrackbackend.service.FoodService;
+import com.nutritrack.nutritrackbackend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +28,7 @@ public class FoodController {
     private final FoodService foodService;
     private final FoodMapper foodMapper;
     private final AllergenService allergenService;
+    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<FoodResponse> createFood(
@@ -39,6 +43,15 @@ public class FoodController {
     @GetMapping
     public ResponseEntity<List<FoodResponse>> getAllFoods() {
         return ResponseEntity.ok(foodService.getAll());
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<FoodResponse>> getMyFoods(
+            @AuthenticationPrincipal UserDetails ud
+    ) {
+        User user = userService.getByEmail(ud.getUsername());
+        List<FoodResponse> list = foodService.getFoodsByUser(user);
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/search/local")
@@ -65,5 +78,15 @@ public class FoodController {
     public ResponseEntity<FoodResponse> importExternalFood(@RequestBody @Valid FoodRequest request) {
         FoodResponse saved = foodService.importExternalFood(request);
         return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMyFood(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails ud
+    ) {
+        User user = userService.getByEmail(ud.getUsername());
+        foodService.deleteByIdAndUser(id, user);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -6,6 +6,7 @@ import com.nutritrack.nutritrackbackend.dto.response.recipe.RecipeResponse;
 import com.nutritrack.nutritrackbackend.entity.*;
 import com.nutritrack.nutritrackbackend.enums.MealType;
 import com.nutritrack.nutritrackbackend.mapper.RecipeMapper;
+import com.nutritrack.nutritrackbackend.repository.DailyLogEntryRepository;
 import com.nutritrack.nutritrackbackend.repository.FoodRepository;
 import com.nutritrack.nutritrackbackend.repository.RecipeRepository;
 import com.nutritrack.nutritrackbackend.service.RecipeService;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final FoodRepository foodRepository;
     private final RecipeMapper recipeMapper;
     private final UserService userService;
+    private final DailyLogEntryRepository entryRepository;
 
     @Override
     @Transactional
@@ -79,6 +82,13 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public List<RecipeResponse> getByUser(User user) {
+        return recipeRepository.findAllByCreatedBy(user).stream()
+                .map(r -> recipeMapper.toResponse(r, user.getNickname()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Page<RecipeResponse> getAll(int page, int size, String currentUserNickname) {
         User currentUser = userService.findByNickname(currentUserNickname)
                 .orElseThrow(() -> new NoSuchElementException(
@@ -121,6 +131,37 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         return Optional.of(recipeMapper.toResponse(receta, currentUserNickname));
+    }
+
+    @Override
+    @Transactional
+    public void deleteByIdAndUser(Long id, User user) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Receta no encontrada"));
+        if (!recipe.getCreatedBy().equals(user)) {
+            throw new SecurityException("No puedes eliminar esta receta");
+        }
+
+        List<DailyLogEntry> entries = entryRepository.findAllByRecipe(recipe);
+
+        for (DailyLogEntry e : entries) {
+            double factor = e.getQuantity() / 100.0;
+            CustomNutrition cn = Optional.ofNullable(e.getCustomNutrition())
+                    .orElseGet(CustomNutrition::new);
+
+            cn.setCalories(      recipe.getCalories()      * factor);
+            cn.setProtein(       recipe.getProtein()       * factor);
+            cn.setFat(           recipe.getFat()           * factor);
+            cn.setCarbs(         recipe.getCarbs()         * factor);
+
+            e.setCustomNutrition(cn);
+            // Desvincular la receta para evitar la FK
+            e.setRecipe(null);
+        }
+
+        entryRepository.saveAll(entries);
+        
+        recipeRepository.delete(recipe);
     }
 
     @Override

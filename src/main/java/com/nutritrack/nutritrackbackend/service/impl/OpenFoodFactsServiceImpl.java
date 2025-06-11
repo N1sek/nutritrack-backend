@@ -39,13 +39,13 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
     )
     @Retryable(
             value = RestClientException.class,
-            maxAttempts = 3,
+            maxAttempts = 1,
             backoff = @Backoff(delay = 2000, multiplier = 2)
     )
     public List<FoodResponse> searchExternalFoods(String query, int page, int size) {
         List<OpenFoodFactsProduct> accumulated = new ArrayList<>();
         int apiPage = page;
-        int rawPageSize = size * 2; // pedimos el doble para compensar el filtrado
+        int rawPageSize = size * 2;
 
         while (accumulated.size() < size) {
             String url = String.format(
@@ -73,19 +73,16 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
                             : List.of();
 
             if (products.isEmpty()) {
-                break;  // no hay más páginas
+                break;
             }
 
-            // filtrado + ordenación
             List<OpenFoodFactsProduct> filtered = filterAndSortProducts(products, query);
 
-            // acumulamos hasta size
             for (OpenFoodFactsProduct p : filtered) {
                 if (accumulated.size() >= size) break;
                 accumulated.add(p);
             }
 
-            // si tras el filtrado hemos obtenido menos de rawPageSize, no hay más
             if (filtered.size() < rawPageSize) {
                 break;
             }
@@ -93,7 +90,6 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
             apiPage++;
         }
 
-        // convertimos sólo los primeros `size`
         return accumulated.stream()
                 .limit(size)
                 .map(OpenFoodFactsMapper::mapToFoodResponse)
@@ -106,10 +102,7 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
         return List.of();
     }
 
-    /**
-     * Filtra por nombre/marca y valores nutricionales, y ordena
-     * para que las coincidencias más exactas vayan primero.
-     */
+
     public static List<OpenFoodFactsProduct> filterAndSortProducts(
             List<OpenFoodFactsProduct> products,
             String query

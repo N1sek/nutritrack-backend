@@ -17,6 +17,8 @@ public interface FoodService {
     List<FoodResponse> searchLocalFoods(String query);
     List<FoodResponse> searchExternalFoods(String query, int page, int size);
     List<FoodResponse> searchAllFoods(String query);
+    List<FoodResponse> getFoodsByUser(User user);
+    void deleteByIdAndUser(Long id, User user);
 
     List<FoodResponse> getAllFoods();
     FoodResponse getFoodById(Long id);

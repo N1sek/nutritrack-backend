@@ -68,10 +68,10 @@ public class RecipeMapper {
                 .mealType(recipe.getMealType())
                 .isPublic(recipe.isPublic())
                 .ingredients(ingredientResponses)
-                .calories(totalCalories)
-                .protein(totalProtein)
-                .fat(totalFat)
-                .carbs(totalCarbs)
+                .calories(round(totalCalories))
+                .protein(round(totalProtein))
+                .fat(round(totalFat))
+                .carbs(round(totalCarbs))
                 .allergens(allergenResponses)
                 .createdBy(recipe.getCreatedBy() != null ? recipe.getCreatedBy().getNickname() : null)
                 .favoritesCount(favoritesCount)
@@ -79,4 +79,9 @@ public class RecipeMapper {
                 .createdAt(recipe.getCreatedAt())
                 .build();
     }
+
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
 }

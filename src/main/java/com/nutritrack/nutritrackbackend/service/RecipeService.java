@@ -15,6 +15,8 @@ public interface RecipeService {
     Optional<RecipeResponse> getById(Long id, String currentUserNickname);
     List<RecipeResponse> getFavorites(String currentUserNickname);
     void toggleFavorite(Long recipeId, User user);
+    List<RecipeResponse> getByUser(User user);
+    void deleteByIdAndUser(Long id, User user);
     List<RecipeResponse> searchRecipes(
             String nickname,
             String name,

@@ -84,6 +84,15 @@ public class RecipeController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<RecipeResponse>> getMyRecipes(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userService.getByEmail(userDetails.getUsername());
+        List<RecipeResponse> mine = recipeService.getByUser(user);
+        return ResponseEntity.ok(mine);
+    }
+
     @GetMapping("/search")
     public ResponseEntity<List<RecipeResponse>> searchRecipes(
             @RequestParam(required = false) String name,
@@ -114,5 +123,15 @@ public class RecipeController {
     ) {
         String url = imageStorageService.store(image);
         return ResponseEntity.ok(new UploadImageResponse(url));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMyRecipe(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails ud
+    ) {
+        User user = userService.getByEmail(ud.getUsername());
+        recipeService.deleteByIdAndUser(id, user);
+        return ResponseEntity.noContent().build();
     }
 }

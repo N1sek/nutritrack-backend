@@ -43,6 +43,24 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
+    public List<FoodResponse> getFoodsByUser(User user) {
+        return foodRepository.findAllByCreatedBy(user).stream()
+                .map(foodMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void deleteByIdAndUser(Long id, User user) {
+        Food food = foodRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Alimento no encontrado"));
+        if (!food.getCreatedBy().equals(user)) {
+            throw new SecurityException("No puedes eliminar este alimento");
+        }
+        foodRepository.delete(food);
+    }
+
+    @Override
     public List<FoodResponse> getAll() {
         return foodRepository.findAll()
                 .stream()

@@ -17,4 +17,13 @@ public class DailyLogEntryResponse {
     private RecipeResponse recipe;
     private Double quantity;
     private MealType mealType;
+
+    // customNutrition
+    private Double calories;
+    private Double protein;
+    private Double fat;
+    private Double carbs;
+    private Double sugar;
+    private Double salt;
+    private Double saturatedFat;
 }
