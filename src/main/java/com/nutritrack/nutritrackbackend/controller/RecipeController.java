@@ -53,7 +53,6 @@ public class RecipeController {
     }
 
 
-    // Obtener recetas favoritas
     @GetMapping("/favorites")
     public ResponseEntity<List<RecipeResponse>> getFavoriteRecipes(
             @AuthenticationPrincipal UserDetails userDetails
@@ -73,7 +72,6 @@ public class RecipeController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Marcar o desmarcar receta como favorita
     @PutMapping("/{id}/favorite")
     public ResponseEntity<Void> toggleFavorite(
             @PathVariable Long id,

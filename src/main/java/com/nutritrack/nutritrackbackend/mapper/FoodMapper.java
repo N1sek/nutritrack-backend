@@ -21,7 +21,6 @@ public class FoodMapper {
         this.allergenMapper = allergenMapper;
     }
 
-    /** Mappea un FoodRequest + alérgenos + creador → entidad nueva */
     public Food toEntity(FoodRequest req, Set<Allergen> allergens, User creator) {
         return Food.builder()
                 .name(req.getName())
@@ -40,7 +39,6 @@ public class FoodMapper {
                 .build();
     }
 
-    /** Actualiza los campos editables de una entidad existente */
     public void updateEntityFromRequest(FoodRequest req, Set<Allergen> allergens, Food food) {
         food.setName(req.getName());
         food.setImageUrl(req.getImageUrl());
@@ -54,7 +52,6 @@ public class FoodMapper {
         food.setAllergens(allergens);
     }
 
-    /** Entidad → DTO de respuesta */
     public FoodResponse toResponse(Food food) {
         var allergenDtos = food.getAllergens().stream()
                 .map(allergenMapper::toResponse)

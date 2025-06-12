@@ -18,7 +18,7 @@ public class CacheConfig {
         CaffeineCacheManager mgr = new CaffeineCacheManager("externalSearch");
         mgr.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(1, TimeUnit.HOURS)  // caduca en 1 hora
-                .maximumSize(1000)                     // max. 1000 entradas
+                .maximumSize(1000) // max. 1000 entradas
         );
         return mgr;
     }

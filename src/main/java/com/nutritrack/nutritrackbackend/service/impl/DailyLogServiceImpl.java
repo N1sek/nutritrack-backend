@@ -147,7 +147,6 @@ public class DailyLogServiceImpl implements DailyLogService {
 
     @Override
     public byte[] exportLogs(User user, LocalDate start, LocalDate end, String format) throws IOException {
-        // recoge los datos que ya tienes mapeados
         List<DailyLogResponse> logs = getExistingLogsInRange(user, start, end);
 
         return switch (format.toLowerCase()) {
@@ -162,10 +161,8 @@ public class DailyLogServiceImpl implements DailyLogService {
         try (StringWriter sw = new StringWriter();
              CSVWriter writer = new CSVWriter(sw)) {
 
-            // Cabecera
             writer.writeNext(new String[]{"Fecha", "Calorías", "Proteínas", "Carbohidratos", "Grasas"});
 
-            // Filas
             for (DailyLogResponse log : logs) {
                 writer.writeNext(new String[]{
                         log.getDate().toString(),
@@ -185,13 +182,13 @@ public class DailyLogServiceImpl implements DailyLogService {
              ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
 
             XSSFSheet sheet = workbook.createSheet("Informe");
-            // Cabecera
+
             Row header = sheet.createRow(0);
             String[] cols = {"Fecha", "Calorías", "Proteínas", "Carbohidratos", "Grasas"};
             for (int i = 0; i < cols.length; i++) {
                 header.createCell(i).setCellValue(cols[i]);
             }
-            // Datos
+
             int rowIdx = 1;
             for (DailyLogResponse log : logs) {
                 Row row = sheet.createRow(rowIdx++);
