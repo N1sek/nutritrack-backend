@@ -13,6 +13,7 @@ import com.nutritrack.nutritrackbackend.service.RecipeService;
 import com.nutritrack.nutritrackbackend.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class RecipeServiceImpl implements RecipeService {
 
     private final RecipeRepository recipeRepository;
@@ -165,6 +167,61 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @Transactional
+    public RecipeResponse update(Long id, RecipeRequest request, User updater) {
+        Recipe recipe = recipeRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Receta no encontrada: " + id));
+        if (
+                !recipe.getCreatedBy().getId().equals(updater.getId())
+                        && !updater.getRole().name().equals("ADMIN")
+        ) {
+            throw new SecurityException("No tienes permiso para modificar esta receta");
+        }
+
+        List<RecipeIngredient> newIngredients = new ArrayList<>();
+        double totalCalories = 0, totalProtein = 0, totalFat = 0, totalCarbs = 0;
+        for (var ingReq : request.getIngredients()) {
+            if (ingReq.getFoodId() == null) {
+                log.error("Uno de los ingredientes tiene foodId null: {}", ingReq);
+                throw new IllegalArgumentException("Algún ingrediente no tiene foodId");
+            }
+            Food food = foodRepository.findById(ingReq.getFoodId())
+                    .orElseThrow(() -> new NoSuchElementException("Food not found: " + ingReq.getFoodId()));
+            double factor = ingReq.getQuantity() / 100.0;
+            if (food.getCalories() != null) totalCalories += food.getCalories() * factor;
+            if (food.getProtein()  != null) totalProtein  += food.getProtein()  * factor;
+            if (food.getFat()      != null) totalFat      += food.getFat()      * factor;
+            if (food.getCarbs()    != null) totalCarbs    += food.getCarbs()    * factor;
+
+            RecipeIngredient ri = RecipeIngredient.builder()
+                    .food(food)
+                    .quantity(ingReq.getQuantity())
+                    .recipe(recipe)
+                    .build();
+            newIngredients.add(ri);
+        }
+
+        recipe.setName(request.getName());
+        recipe.setDescription(request.getDescription());
+        recipe.setInstructions(request.getInstructions());
+        recipe.setImageUrl(request.getImageUrl());
+        recipe.setMealType(request.getMealType());
+        recipe.setPublic(request.getIsPublic());
+
+        recipe.getIngredients().clear();
+        recipe.getIngredients().addAll(newIngredients);
+
+        recipe.setCalories(round(totalCalories));
+        recipe.setProtein(round(totalProtein));
+        recipe.setFat(round(totalFat));
+        recipe.setCarbs(round(totalCarbs));
+
+        Recipe saved = recipeRepository.save(recipe);
+        return recipeMapper.toResponse(saved, updater.getNickname());
+    }
+
+
+    @Override
     public List<RecipeResponse> getFavorites(String currentUserNickname) {
         return recipeRepository.findAll().stream()
                 .filter(r -> r.getFavoritedBy().stream()
@@ -201,7 +258,6 @@ public class RecipeServiceImpl implements RecipeService {
         String nickname = userService.getByEmail(email).getNickname();
 
         return recipeRepository.findAll().stream()
-                // Filtramos visibilidad: solo públicas o propias
                 .filter(recipe -> recipe.isPublic()
                         || recipe.getCreatedBy().getNickname().equalsIgnoreCase(nickname))
                 .map(recipe -> recipeMapper.toResponse(recipe, nickname))

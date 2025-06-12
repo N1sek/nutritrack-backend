@@ -17,6 +17,7 @@ public interface RecipeService {
     void toggleFavorite(Long recipeId, User user);
     List<RecipeResponse> getByUser(User user);
     void deleteByIdAndUser(Long id, User user);
+    RecipeResponse update(Long id, RecipeRequest request, User updater);
     List<RecipeResponse> searchRecipes(
             String nickname,
             String name,
