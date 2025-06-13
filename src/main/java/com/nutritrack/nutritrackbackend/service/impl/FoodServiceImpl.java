@@ -86,6 +86,9 @@ public class FoodServiceImpl implements FoodService {
         Optional<Food> existing = foodRepository
                 .findByNameIgnoreCaseAndImageUrl(request.getName(), request.getImageUrl());
 
+        User admin = userService.findByEmail("admin@nutritrack.com")
+                .orElseThrow(() -> new RuntimeException("No se encontró el usuario admin del sistema"));
+
         if (existing.isPresent()) {
             return foodMapper.toResponse(existing.get());
         }
@@ -103,6 +106,7 @@ public class FoodServiceImpl implements FoodService {
                 .sugar(round(request.getSugar()))
                 .salt(round(request.getSalt()))
                 .saturatedFat(round(request.getSaturatedFat()))
+                .createdBy(admin)
                 .imported(true)
                 .allergens(allergens)
                 .build();

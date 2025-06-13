@@ -140,7 +140,10 @@ public class RecipeServiceImpl implements RecipeService {
     public void deleteByIdAndUser(Long id, User user) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Receta no encontrada"));
-        if (!recipe.getCreatedBy().equals(user)) {
+        if (user == null || (
+                !recipe.getCreatedBy().getId().equals(user.getId())
+                        && !user.getRole().name().equals("ADMIN"))
+        ) {
             throw new SecurityException("No puedes eliminar esta receta");
         }
 
