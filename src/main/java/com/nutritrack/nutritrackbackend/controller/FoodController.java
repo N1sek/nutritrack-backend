@@ -2,12 +2,14 @@ package com.nutritrack.nutritrackbackend.controller;
 
 import com.nutritrack.nutritrackbackend.dto.request.food.FoodRequest;
 import com.nutritrack.nutritrackbackend.dto.response.food.FoodResponse;
+import com.nutritrack.nutritrackbackend.dto.response.image.UploadImageResponse;
 import com.nutritrack.nutritrackbackend.entity.Food;
 import com.nutritrack.nutritrackbackend.entity.User;
 import com.nutritrack.nutritrackbackend.mapper.FoodMapper;
 import com.nutritrack.nutritrackbackend.security.UserDetailsAdapter;
 import com.nutritrack.nutritrackbackend.service.AllergenService;
 import com.nutritrack.nutritrackbackend.service.FoodService;
+import com.nutritrack.nutritrackbackend.service.ImageStorageService;
 import com.nutritrack.nutritrackbackend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -29,6 +32,7 @@ public class FoodController {
     private final FoodMapper foodMapper;
     private final AllergenService allergenService;
     private final UserService userService;
+    private final ImageStorageService imageStorageService;
 
     @PostMapping
     public ResponseEntity<FoodResponse> createFood(
@@ -88,5 +92,13 @@ public class FoodController {
         User user = userService.getByEmail(ud.getUsername());
         foodService.deleteByIdAndUser(id, user);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<UploadImageResponse> uploadImage(
+            @RequestParam("image") MultipartFile image
+    ) {
+        String url = imageStorageService.store(image);
+        return ResponseEntity.ok(new UploadImageResponse(url));
     }
 }
