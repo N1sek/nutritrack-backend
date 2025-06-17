@@ -43,7 +43,7 @@ public class OpenFoodFactsServiceImpl implements OpenFoodFactsService {
     @Cacheable(
             value = "externalSearch",
             key = "#query.toLowerCase() + '_' + #page + '_' + #size",
-            unless = "#result.isEmpty()"
+            unless = "#result.isEmpty() || #query.length() < 3"
     )
     @Retryable(
             value = RestClientException.class,
