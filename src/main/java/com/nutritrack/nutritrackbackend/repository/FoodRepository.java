@@ -22,4 +22,5 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     List<Food> findAllByCreatedBy(User user);
 
 
+    void deleteAllByCreatedBy(User user);
 }

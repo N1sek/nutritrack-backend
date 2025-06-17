@@ -1,5 +1,6 @@
 package com.nutritrack.nutritrackbackend.service;
 
+import com.nutritrack.nutritrackbackend.dto.request.user.ChangePasswordRequest;
 import com.nutritrack.nutritrackbackend.dto.request.user.UpdateProfileRequest;
 import com.nutritrack.nutritrackbackend.dto.response.user.UserResponse;
 import com.nutritrack.nutritrackbackend.entity.User;
@@ -22,6 +23,8 @@ public interface UserService extends UserDetailsService {
     void updateUserRole(Long id, Role newRole);
     Optional<User> findByNickname(String nickname);
     void updateUserAvatar(User user, MultipartFile file);
+    void changePassword(User user, ChangePasswordRequest request);
+    void deleteMyAccount(User user);
 
     default User getByEmail(String email) {
         return findByEmail(email)

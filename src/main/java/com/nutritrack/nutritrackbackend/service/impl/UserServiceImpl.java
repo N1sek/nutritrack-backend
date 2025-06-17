@@ -1,11 +1,16 @@
 package com.nutritrack.nutritrackbackend.service.impl;
 
+import com.nutritrack.nutritrackbackend.dto.request.user.ChangePasswordRequest;
 import com.nutritrack.nutritrackbackend.dto.request.user.UpdateProfileRequest;
 import com.nutritrack.nutritrackbackend.dto.response.user.UserResponse;
 import com.nutritrack.nutritrackbackend.entity.Allergen;
+import com.nutritrack.nutritrackbackend.entity.Recipe;
 import com.nutritrack.nutritrackbackend.entity.User;
 import com.nutritrack.nutritrackbackend.enums.Role;
 import com.nutritrack.nutritrackbackend.mapper.UserMapper;
+import com.nutritrack.nutritrackbackend.repository.DailyLogRepository;
+import com.nutritrack.nutritrackbackend.repository.FoodRepository;
+import com.nutritrack.nutritrackbackend.repository.RecipeRepository;
 import com.nutritrack.nutritrackbackend.repository.UserRepository;
 import com.nutritrack.nutritrackbackend.security.UserDetailsAdapter;
 import com.nutritrack.nutritrackbackend.service.AllergenService;
@@ -40,6 +45,9 @@ public class UserServiceImpl implements UserService {
     private static final String IMAGE_DIR = "./uploads/images";
     private static final String AVATAR_SUBDIR = "avatars";
     private final ImageStorageService imageStorageService;
+    private final FoodRepository foodRepository;
+    private final RecipeRepository recipeRepository;
+    private final DailyLogRepository dailyLogRepository;
 
 
     @Override
@@ -83,9 +91,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUserById(Long id) {
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado"));
+
+        removeUserFromRecipeFavorites(user);
+        dailyLogRepository.deleteAllByUser(user);
+        foodRepository.deleteAllByCreatedBy(user);
+        recipeRepository.deleteAllByCreatedBy(user);
+        userRepository.delete(user);
     }
+
+    @Override
+    @Transactional
+    public void deleteMyAccount(User user) {
+        removeUserFromRecipeFavorites(user);
+        dailyLogRepository.deleteAllByUser(user);
+        foodRepository.deleteAllByCreatedBy(user);
+        recipeRepository.deleteAllByCreatedBy(user);
+        userRepository.delete(user);
+    }
+
 
     @Override
     @Transactional
@@ -152,5 +179,22 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
+    @Transactional
+    public void changePassword(User user, ChangePasswordRequest request) {
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("La contraseña actual es incorrecta");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
 
+    private void removeUserFromRecipeFavorites(User user) {
+        // Recupera todas las recetas que tengan al usuario en favoritos
+        List<Recipe> recipes = recipeRepository.findAllByFavoritedByContains(user);
+        for (Recipe recipe : recipes) {
+            recipe.getFavoritedBy().remove(user);
+            recipeRepository.save(recipe);
+        }
+    }
 }

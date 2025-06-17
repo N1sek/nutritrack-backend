@@ -1,5 +1,6 @@
 package com.nutritrack.nutritrackbackend.controller;
 
+import com.nutritrack.nutritrackbackend.dto.request.user.ChangePasswordRequest;
 import com.nutritrack.nutritrackbackend.dto.request.user.UpdateProfileRequest;
 import com.nutritrack.nutritrackbackend.dto.response.user.UserResponse;
 import com.nutritrack.nutritrackbackend.entity.User;
@@ -49,4 +50,22 @@ public class UserController {
         userService.updateUserAvatar(user, file);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/me/change-password")
+    public ResponseEntity<Void> changePassword(
+            Authentication authentication,
+            @RequestBody @Valid ChangePasswordRequest request
+    ) {
+        User user = ((UserDetailsAdapter) authentication.getPrincipal()).getUser();
+        userService.changePassword(user, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyAccount(Authentication authentication) {
+        User user = ((UserDetailsAdapter) authentication.getPrincipal()).getUser();
+        userService.deleteMyAccount(user);
+        return ResponseEntity.noContent().build();
+    }
+
 }

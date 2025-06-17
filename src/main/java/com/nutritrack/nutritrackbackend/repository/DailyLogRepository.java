@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface DailyLogRepository extends JpaRepository<DailyLog, Long> {
     Optional<DailyLog> findByUserAndDate(User user, LocalDate date);
     List<DailyLog> findAllByUserAndDateBetween(User user, LocalDate start, LocalDate end);
+
+    void deleteAllByUser(User user);
 }

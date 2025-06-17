@@ -13,4 +13,7 @@ import java.util.List;
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     Page<Recipe> findByIsPublicTrueOrCreatedBy(User createdBy, Pageable pageable);
     List<Recipe> findAllByCreatedBy(User user);
+    List<Recipe> findAllByFavoritedByContains(User user);
+
+    void deleteAllByCreatedBy(User user);
 }
